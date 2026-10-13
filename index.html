@@ -6,7 +6,7 @@
 <title>ピッチ採点ステージ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
 /* Layout: karaoke monitor — a wide scrolling note stage on top, live meters underneath, settings beside them. One deliberate dark look. */
 :root{
@@ -53,9 +53,9 @@ body{font-family:var(--font-body);font-size:15px;line-height:1.6}
 @keyframes bgv{from{background-position:0% 30%}to{background-position:100% 70%}}
 .stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.85}
 .stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.badge{position:absolute;left:12px;bottom:8px;font-size:12px;padding:2px 10px;border-radius:999px;background:rgba(4,8,30,.6);color:#C9D2FF;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{position:absolute;left:50%;top:4px;transform:translateX(-50%);font-size:12px;padding:2px 10px;border-radius:999px;background:rgba(4,8,30,.6);color:#C9D2FF;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .stage .badge{display:block}
-@media (max-width:600px){.stage .badge{display:none}}
+@media (max-width:700px){.stage .badge{display:none}}
 .legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted)}
 .legend i{display:inline-block;width:14px;height:8px;border-radius:3px;margin-right:5px;vertical-align:middle}
 .busy{position:absolute;inset:0;display:grid;place-items:center;background:rgba(8,12,30,.82)}
@@ -113,6 +113,18 @@ details.how td,details.how th{border-bottom:1px solid var(--line);padding:6px 8p
 details.how th{color:var(--fg);font-weight:700}
 .tblwrap{overflow-x:auto}
 
+.btnrow{display:flex;flex-wrap:wrap;gap:8px}
+.lyr{display:flex;flex-direction:column;gap:10px}
+.lyr-editor{display:flex;flex-direction:column;gap:8px}
+.lyr-editor textarea{width:100%;min-height:180px;resize:vertical;background:var(--bg);border:1px solid var(--line);color:var(--fg);font:inherit;font-size:14px;line-height:1.7;padding:10px 12px;border-radius:10px}
+.lyr-editor textarea:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}
+.lyr-editor .hint b{color:var(--fg);font-weight:700}
+.lyr-opts{display:flex;flex-direction:column;gap:10px;font-size:14px}
+.selrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+select{background:var(--panel-2);color:var(--fg);border:1px solid var(--line);border-radius:8px;font:inherit;font-size:14px;padding:6px 8px;max-width:100%}
+select:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}
+.tapbar{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:25;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 12px;background:var(--panel-2);border:1px solid var(--gold);border-radius:14px;padding:10px 14px;width:min(640px,calc(100% - 32px));font-size:14px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.tapbar span{flex:1 1 220px;min-width:0;overflow-wrap:anywhere}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--coral);color:var(--fg);padding:10px 16px;border-radius:10px;max-width:min(520px,calc(100% - 32px));font-size:14px;z-index:30}
 
 .result{position:fixed;inset:0;background:rgba(3,6,22,.86);display:grid;place-items:center;z-index:20;padding:16px}
@@ -222,6 +234,35 @@ details.how th{color:var(--fg);font-weight:700}
     </div>
   </section>
 
+  <section class="card lyr" aria-labelledby="lyrTitle">
+    <div class="lib-head"><h2 id="lyrTitle">歌詞</h2></div>
+    <p class="hint" id="lyrStatus">歌詞はまだありません。</p>
+    <div class="btnrow">
+      <label class="btn" for="lyrFile">歌詞ファイル（.lrc / .txt）</label>
+      <input class="vh" type="file" id="lyrFile" accept=".lrc,.txt,text/plain">
+      <button class="btn" id="lyrEditBtn" aria-expanded="false" aria-controls="lyrEditor">貼り付け・編集</button>
+      <button class="btn" id="lyrTapBtn">タップでタイミングを合わせる</button>
+      <button class="btn" id="lyrExport">LRCを書き出す</button>
+    </div>
+    <div class="lyr-editor" id="lyrEditor" hidden>
+      <label for="lyrText" class="vh">歌詞</label>
+      <textarea id="lyrText" rows="9" spellcheck="false" placeholder="例）&#10;[00:12.30]やがて世界が歌い出す&#10;[00:16.80]{I will|アイ ウィル} sing all together&#10;&#10;時刻（[分:秒]）がなくても、1行ずつ書けば歌声に合わせて自動で割り当てます。"></textarea>
+      <div class="btnrow"><button class="btn primary" id="lyrApply">反映する</button><button class="btn" id="lyrClear">歌詞を消す</button></div>
+      <p class="hint">1行が画面の1行になります。行頭に <b>[01:23.45]</b> のような時刻を書くと（LRC形式）その時刻に表示します。ふりがなは <b>{世界|せかい}</b>・<b>｜世界《せかい》</b>・<b>世界(せかい)</b> の書き方で付けられます（英語にカタカナを振る例：<b>{I will|アイ ウィル}</b>）。</p>
+    </div>
+    <div class="lyr-opts">
+      <label class="chk"><input type="checkbox" id="furiChk" checked><span>漢字にふりがなを自動で付ける（初回だけ辞書 約18MB を読み込みます）</span></label>
+      <label class="selrow">歌い終わった文字の色
+        <select id="wipeSel"><option value="#E8243C">赤</option><option value="#2B6BFF">青</option><option value="#11A85A">緑</option><option value="#FF7A00">オレンジ</option><option value="#B23CE8">紫</option></select>
+      </label>
+      <div class="lagrow">
+        <span>歌詞のタイミング</span>
+        <input type="range" id="lyrOff" min="-3000" max="3000" step="50" value="0" aria-label="歌詞のタイミング補正">
+        <output id="lyrOffOut">0 ms</output>
+      </div>
+    </div>
+  </section>
+
   <section class="readouts">
     <div class="card meter">
       <h2>いまの音</h2>
@@ -253,6 +294,12 @@ details.how th{color:var(--fg);font-weight:700}
         <button id="modeSelf" aria-pressed="true">お手本なし</button>
         <button id="modeRef" aria-pressed="false">お手本と比べる</button>
       </div>
+      <div class="opts">
+        <label class="selrow" for="srcSel">音源の種類
+          <select id="srcSel"><option value="auto">自動で判定</option><option value="mix">伴奏入り（ボーカルを抜き出す）</option><option value="vocal">ボーカルだけ（アカペラ）</option></select>
+        </label>
+        <p class="hint" id="srcInfo"></p>
+      </div>
       <div class="opts" id="selfOpts">
         <p class="hint">半音（ドレミの各音）にどれだけ近いかで判定します。曲がA4=440Hzからずれて調律されていても合わせられるよう、基準ピッチを補正します。</p>
         <label class="chk"><input type="checkbox" id="tuneChk" checked><span>基準ピッチを自動補正する</span></label>
@@ -270,7 +317,7 @@ details.how th{color:var(--fg);font-weight:700}
           <output id="lagOut">0 ms</output>
         </div>
         <div class="row"><button class="small-btn" id="autoLagBtn">タイミングを自動で合わせる</button></div>
-        <p class="hint">お手本には、原曲のボーカルだけの音源か、ガイドメロディを使うと正確です。</p>
+        <p class="hint">お手本には伴奏入りの原曲もそのまま使えます（ボーカルを抜き出して判定します）。ボーカルだけの音源やガイドメロディならさらに正確です。</p>
       </div>
     </div>
   </section>
@@ -278,7 +325,13 @@ details.how th{color:var(--fg);font-weight:700}
   <details class="how">
     <summary>採点のしくみと、うまく測るコツ</summary>
     <div class="body">
-      <p>音声を10ミリ秒ごとに区切り、YINという方法で声の基本周波数（音の高さ）を求めます。周波数 f はセント単位の音高 1200·log₂(f/440) に直し、100セント＝半音1つとして扱います。</p>
+      <p>音声を10ミリ秒ごとに区切って、声の基本周波数（音の高さ）を求めます。周波数 f はセント単位の音高 1200·log₂(f/440) に直し、100セント＝半音1つとして扱います。</p>
+      <div class="tblwrap"><table>
+        <tr><th>音源の種類</th><th>音の高さの求め方</th></tr>
+        <tr><td>ボーカルだけ</td><td>YINという方法で、一番はっきりした周期を声の高さとします。</td></tr>
+        <tr><td>伴奏入り</td><td>① 左右のチャンネルで同じ成分（ボーカルは普通まん中に定位している）だけを残す ② 倍音をまとめて「その高さらしさ」を計算する ③ 時間方向につながる音高の線を作る ④ 弱い線・オクターブ違いの重複・ピアノやパッドのように揺れがまったくない線を捨てる ⑤ 残った中で一番強い線をボーカルとします。</td></tr>
+        <tr><td>自動で判定</td><td>はっきりした周期を持つ時間の割合と、左右の違いの大きさから、伴奏が入っているかを判定します。</td></tr>
+      </table></div>
       <div class="tblwrap"><table>
         <tr><th>項目（配点）</th><th>お手本なし</th><th>お手本と比べる</th></tr>
         <tr><td>音程（60%）</td><td>各音の中心が最寄りの半音から何セントずれたか。10セント以内で満点、40セント以上で0点</td><td>お手本のバー（ガイドバー）の長さのうち、正しい音で歌えた割合。35セント以内で満点、100セント以上で0点。声を出さなかった部分は0点</td></tr>
@@ -293,10 +346,11 @@ details.how th{color:var(--fg);font-weight:700}
         <tr><td>こぶし</td><td>伸ばし音の途中で、0.03〜0.2秒だけ35セント以上上にはねて戻った</td></tr>
         <tr><td>ビブラート</td><td>音高が毎秒4〜8回、15〜150セントの幅で揺れた</td></tr>
         <tr><td>フォール</td><td>音の終わりで、声を出したまま80セント以上下がった</td></tr>
+        <tr><td>アクセント</td><td>音の出だし（0.06秒）が、その音を伸ばしている部分より4dB以上大きい</td></tr>
         <tr><td>ロングトーン</td><td>1秒以上、ぶれ少なく（またはビブラートをかけて）伸ばした</td></tr>
       </table></div>
-      <p>画面の上半分が音程バーです。白いバーがガイドで、左の縦線（判定ライン）を通過するときに音程が合っていれば金色、外れると灰色になります。▶ が今の自分の声の高さです。フレーズを歌い終えるたびにそのフレーズの音程の割合が出ます。下の2行は、ガイドの音をドレミで表示した歌詞の代わりのテロップです。</p>
-      <p><b>コツ：</b>伴奏入りの音源では楽器の音も拾ってしまいます。ボーカルだけの録音（アカペラ）がいちばん正確です。お手本なしモードでは「狙った音」が分からないので、半音の半分（50セント）以上ずれると隣の音を歌ったと判定されます。</p>
+      <p>画面の上の帯が音程バーです。1区間ぶんのバーが並び、縦線とハート（今の自分の声の高さ）が左から右へ進みます。右端まで行くと次の「演奏区間」に切り替わります。通過したバーは、音程が合っていれば金色、外れると灰色になります。フレーズを歌い終えるたびに、そのフレーズの音程の割合が出ます。下の2行が歌詞で、歌った部分から色が変わります（歌詞がないときはガイドの音をドレミで表示）。</p>
+      <p><b>コツ：</b>伴奏入りの音源でもボーカルを抜き出しますが、ボーカルと同じ高さで鳴り続ける楽器（揺れのあるリード楽器など）や、左右に広げられたボーカルは区別しきれないことがあります。そのときはボーカルだけの音源がいちばん正確です。お手本なしモードでは「狙った音」が分からないので、半音の半分（50セント）以上ずれると隣の音を歌ったと判定されます。</p>
     </div>
   </details>
 </div>
@@ -324,6 +378,11 @@ details.how th{color:var(--fg);font-weight:700}
     </div>
   </div>
 </div>
+<div class="tapbar" id="tapBar" hidden>
+  <span id="tapInfo"></span>
+  <button class="btn primary" id="tapNext">この行の歌い出し（Space）</button>
+  <button class="btn" id="tapDone">終了</button>
+</div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -336,15 +395,15 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const noteName = q => NAMES[((q % 12) + 12) % 12] + (Math.floor(q / 12) - 1);
 const solfName = q => SOLF[((q % 12) + 12) % 12];
 
-// YIN pitch detection on mono data. Returns per-frame f0 (0 = unvoiced) and RMS.
-async function detectPitch(x, sr, onProgress) {
+// YIN pitch detection on mono data. Returns per-frame f0 (0 = unvoiced), RMS and aperiodicity (0 = perfectly periodic).
+async function detectPitch(x, sr, onProgress, step = 1) {
   const hop = Math.round(sr * HOP), W = Math.round(sr * 0.02);
   const tMin = Math.floor(sr / 1000), tMax = Math.ceil(sr / 70);
   const n = Math.max(0, Math.floor((x.length - W - tMax - 2) / hop) + 1);
-  const f = new Float32Array(n), r = new Float32Array(n);
+  const f = new Float32Array(n), r = new Float32Array(n), ap = new Float32Array(n).fill(1);
   const d = new Float32Array(tMax + 2);
   let last = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < n; i += step) {
     const s = i * hop;
     let e = 0;
     for (let j = 0; j < W; j++) { const v = x[s + j]; e += v * v; }
@@ -361,8 +420,9 @@ async function detectPitch(x, sr, onProgress) {
     for (let t = tMin; t <= tMax; t++) {
       if (d[t] < 0.15) { while (t < tMax && d[t + 1] < d[t]) t++; tau = t; break; }
     }
-    if (tau < 0) { f[i] = 0; }
+    if (tau < 0) { f[i] = 0; let mn = 1; for (let t = tMin; t <= tMax; t++) if (d[t] < mn) mn = d[t]; ap[i] = mn; }
     else {
+      ap[i] = d[tau];
       const a = d[tau - 1], b = d[tau], c = d[tau + 1];
       const den = a + c - 2 * b;
       const bt = den > 1e-9 ? tau + 0.5 * (a - c) / den : tau;
@@ -373,7 +433,7 @@ async function detectPitch(x, sr, onProgress) {
       if (now - last > 40) { onProgress(i / n); await new Promise(res => setTimeout(res, 0)); last = now; }
     }
   }
-  return { f, r };
+  return { f, r, ap };
 }
 
 // Loudness gate, 5-frame median smoothing (removes octave jumps), drop runs shorter than 50 ms.
@@ -405,6 +465,269 @@ function postProcess(f, r) {
   const db = new Float32Array(n);
   for (let k = 0; k < n; k++) db[k] = 20 * Math.log10(Math.max(r[k], 1e-6));
   return { midi: med, db, n };
+}
+
+// ---- Vocal melody from a mixed recording (accompaniment present) ----
+// Steps: (1) keep the part of the spectrum that is identical in L and R (vocals are usually panned centre),
+// (2) harmonic-sum "salience" over 10-cent pitch bins, (3) join salience peaks into pitch contours,
+// (4) drop weak / octave-duplicate / out-of-range contours, (5) per frame take the strongest remaining contour.
+// The contour approach follows Salamon & Gómez, "Melody extraction from polyphonic music signals" (2012).
+function makeFFT(N) {
+  const rev = new Uint32Array(N), bits = Math.round(Math.log2(N));
+  for (let i = 0; i < N; i++) { let r = 0; for (let b = 0; b < bits; b++) r |= ((i >> b) & 1) << (bits - 1 - b); rev[i] = r; }
+  const cs = new Float64Array(N / 2), sn = new Float64Array(N / 2);
+  for (let k = 0; k < N / 2; k++) { cs[k] = Math.cos(TAU * k / N); sn[k] = Math.sin(TAU * k / N); }
+  return (re, im) => {
+    for (let i = 0; i < N; i++) { const j = rev[i]; if (j > i) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; } }
+    for (let size = 2; size <= N; size <<= 1) {
+      const half = size >> 1, step = N / size;
+      for (let i = 0; i < N; i += size) {
+        for (let j = 0, k = 0; j < half; j++, k += step) {
+          const a = i + j, b = a + half;
+          const tr = re[b] * cs[k] + im[b] * sn[k], ti = im[b] * cs[k] - re[b] * sn[k];
+          re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+        }
+      }
+    }
+  };
+}
+
+const MEL_FMIN = 70, MEL_BINS = 500; // 10-cent bins from 70 Hz up to ~1250 Hz
+const COS2 = new Float64Array(401).map((_, k) => Math.cos(Math.PI * (k - 200) / 400) ** 2); // cos² weight, 0.05-bin steps over ±1 semitone
+const LOG2H = new Float64Array(17).map((_, h) => h ? 120 * Math.log2(h) : 0);
+
+// Per-frame analysis lives in a plain (non-async) closure so the hot loops stay fast.
+function melodyAnalyzer(L, R, sr) {
+  const N = sr > 24000 ? 4096 : 2048, hop = Math.round(sr * HOP), half = N >> 1;
+  const centreOff = Math.round(sr * 0.01);
+  const n = Math.max(0, Math.floor((L.length - 2 * centreOff) / hop) + 1);
+  const fft = makeFFT(N), re = new Float64Array(N), im = new Float64Array(N);
+  const win = new Float64Array(N); for (let k = 0; k < N; k++) win[k] = 0.5 - 0.5 * Math.cos(TAU * k / N);
+  const kMax = Math.min(half - 2, Math.floor(5000 * N / sr));
+  const A = new Float64Array(kMax + 2), bw = new Float64Array(kMax + 2);
+  for (let k = 1; k <= kMax + 1; k++) { const fr = k * sr / N; bw[k] = fr < 250 ? (fr / 250) * (fr / 250) : fr > 4000 ? 4000 / fr : 1; }
+  // centre extraction only helps when the channels really differ
+  let dE = 0, sE = 0;
+  for (let i = 0; i < L.length; i += 7) { const d = L[i] - R[i], s = L[i] + R[i]; dE += d * d; sE += s * s; }
+  const stereo = sE > 0 && dE / sE > 0.002;
+  const sal = new Float64Array(MEL_BINS);
+  const H = 16, ALPHA = 0.8;
+  const pkF = [], pkB = [], pkS = [], frameStart = new Int32Array(n + 1);
+  const pf = new Float64Array(64), pa = new Float64Array(64);
+  const energy = new Float32Array(n);
+  const step = i => {
+    frameStart[i] = pkF.length;
+    const c = i * hop + centreOff, s0 = c - half;
+    for (let k = 0; k < N; k++) {
+      const idx = s0 + k;
+      if (idx < 0 || idx >= L.length) { re[k] = 0; im[k] = 0; }
+      else { re[k] = L[idx] * win[k]; im[k] = R[idx] * win[k]; }
+    }
+    fft(re, im);
+    let en = 0;
+    for (let k = 1; k <= kMax + 1; k++) {
+      const zr = re[k], zi = im[k], wr = re[N - k], wi = im[N - k];
+      const lr = (zr + wr) / 2, li = (zi - wi) / 2, rr = (zi + wi) / 2, ri = (wr - zr) / 2;
+      const sr2 = lr + rr, si2 = li + ri;
+      const mid = Math.sqrt(sr2 * sr2 + si2 * si2) / 2;
+      let g = 1;
+      if (stereo) {
+        const dr = lr - rr, di = li - ri;
+        const ml = Math.sqrt(lr * lr + li * li), mr = Math.sqrt(rr * rr + ri * ri);
+        const sim = Math.max(0, 1 - Math.sqrt(dr * dr + di * di) / (ml + mr + 1e-12));
+        g = sim * sim;
+      }
+      A[k] = mid * g * bw[k];
+      en += A[k] * A[k];
+    }
+    energy[i] = Math.sqrt(en);
+    // spectral peaks (parabolic interpolation on log magnitude), strongest 40 within 40 dB of the top
+    let np = 0, top = 0;
+    for (let k = 2; k <= kMax; k++) {
+      const v = A[k];
+      if (v <= A[k - 1] || v < A[k + 1] || v <= 1e-9) continue;
+      const al = Math.log(A[k - 1] + 1e-12), be = Math.log(v), ga = Math.log(A[k + 1] + 1e-12);
+      const den = al - 2 * be + ga, p = den < 0 ? 0.5 * (al - ga) / den : 0;
+      const mag = Math.exp(be - 0.25 * (al - ga) * p);
+      if (np < 64) { pf[np] = (k + p) * sr / N; pa[np] = mag; np++; }
+      else { let mi = 0; for (let q = 1; q < 64; q++) if (pa[q] < pa[mi]) mi = q; if (mag > pa[mi]) { pf[mi] = (k + p) * sr / N; pa[mi] = mag; } }
+      if (mag > top) top = mag;
+    }
+    sal.fill(0);
+    const floor = top * 0.01;
+    let used = 0;
+    for (let q = 0; q < np; q++) {
+      if (pa[q] < floor) continue;
+      if (++used > 40) break;
+      const pq = 120 * Math.log2(pf[q] / MEL_FMIN);
+      let w = pa[q];
+      for (let h = 1; h <= H; h++, w *= ALPHA) {
+        const pb = pq - LOG2H[h];
+        if (pb > MEL_BINS - 1) continue;
+        if (pb < -10) break;
+        const b0 = Math.max(0, Math.ceil(pb - 10)), b1 = Math.min(MEL_BINS - 1, Math.floor(pb + 10));
+        for (let b = b0; b <= b1; b++) sal[b] += w * COS2[Math.round((b - pb) * 20) + 200];
+      }
+    }
+    // salience peaks: top 5 local maxima
+    const cand = [];
+    for (let b = 1; b < MEL_BINS - 1; b++) {
+      const v = sal[b];
+      if (v > 0 && v > sal[b - 1] && v >= sal[b + 1]) cand.push(b);
+    }
+    cand.sort((x, y) => sal[y] - sal[x]);
+    for (let q = 0; q < Math.min(5, cand.length); q++) {
+      const b = cand[q], a0 = sal[b - 1], b0 = sal[b], c0 = sal[b + 1];
+      const den = a0 - 2 * b0 + c0, off = den < 0 ? 0.5 * (a0 - c0) / den : 0;
+      pkF.push(i); pkB.push(b + off); pkS.push(b0 - 0.25 * (a0 - c0) * off);
+    }
+  };
+  return { n, step, stereo, energy, frameStart, pkB, pkS };
+}
+
+async function extractMelody(L, R, sr, onProgress) {
+  const M = melodyAnalyzer(L, R, sr), n = M.n;
+  let last = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  for (let i = 0; i < n; i++) {
+    M.step(i);
+    if (onProgress && (i & 63) === 0) {
+      const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+      if (now - last > 40) { onProgress(0.95 * i / n); await new Promise(res => setTimeout(res, 0)); last = now; }
+    }
+  }
+  M.frameStart[n] = M.pkB.length;
+  const out = melodyFromPeaks(n, M.frameStart, Float32Array.from(M.pkB), Float32Array.from(M.pkS));
+  const f = new Float32Array(n), r = new Float32Array(n);
+  for (let i = 0; i < n; i++) if (out.bin[i] >= 0) { f[i] = MEL_FMIN * Math.pow(2, out.bin[i] / 120); r[i] = M.energy[i]; }
+  if (onProgress) onProgress(1);
+  return { f, r, stereo: M.stereo, contours: out.kept };
+}
+
+
+
+function melodyFromPeaks(n, fs, pB, pS) {
+  const P = pB.length;
+  const salient = new Uint8Array(P), used = new Uint8Array(P);
+  // salient = within 90% of the frame's best peak, and not far below the song-wide average
+  let sum = 0, sum2 = 0, cnt = 0;
+  for (let i = 0; i < n; i++) {
+    let mx = 0; for (let q = fs[i]; q < fs[i + 1]; q++) mx = Math.max(mx, pS[q]);
+    for (let q = fs[i]; q < fs[i + 1]; q++) if (pS[q] >= 0.9 * mx && mx > 0) { salient[q] = 1; sum += pS[q]; sum2 += pS[q] * pS[q]; cnt++; }
+  }
+  const mu = cnt ? sum / cnt : 0, sd = cnt ? Math.sqrt(Math.max(0, sum2 / cnt - mu * mu)) : 0;
+  for (let q = 0; q < P; q++) if (salient[q] && pS[q] < mu - 0.9 * sd) salient[q] = 0;
+  const frameOf = new Int32Array(P);
+  for (let i = 0; i < n; i++) for (let q = fs[i]; q < fs[i + 1]; q++) frameOf[q] = i;
+  const order = []; for (let q = 0; q < P; q++) if (salient[q]) order.push(q);
+  order.sort((x, y) => pS[y] - pS[x]);
+  const MAXSTEP = 12, MAXGAP = 10; // 120 cents per 10 ms, up to 100 ms on weak peaks
+  const contours = [];
+  const follow = (q0, dir) => {
+    const seq = []; let cur = q0, gap = 0;
+    for (let i = frameOf[q0] + dir; i >= 0 && i < n; i += dir) {
+      let best = -1, bd = MAXSTEP + 1;
+      for (let q = fs[i]; q < fs[i + 1]; q++) {
+        if (used[q]) continue;
+        const d = Math.abs(pB[q] - pB[cur]);
+        if (d < bd) { bd = d; best = q; }
+      }
+      if (best < 0) break;
+      gap = salient[best] ? 0 : gap + 1;
+      if (gap > MAXGAP) break;
+      used[best] = 1; seq.push(best); cur = best;
+    }
+    while (seq.length && !salient[seq[seq.length - 1]]) used[seq.pop()] = 0;
+    return seq;
+  };
+  for (const q0 of order) {
+    if (used[q0]) continue;
+    used[q0] = 1;
+    const fw = follow(q0, 1), bk = follow(q0, -1);
+    const qs = bk.reverse().concat([q0], fw);
+    if (qs.length < 8) continue;
+    const c = { s: frameOf[qs[0]], e: frameOf[qs[qs.length - 1]], qs };
+    let ts = 0, mp = 0;
+    for (const q of qs) { ts += pS[q]; mp += pB[q]; }
+    c.total = ts; c.mean = ts / qs.length; c.pitch = mp / qs.length;
+    let v = 0; for (const q of qs) v += (pB[q] - c.pitch) * (pB[q] - c.pitch);
+    c.std = Math.sqrt(v / qs.length) * 10;
+    c.vib = contourVibrato(qs.map(q => pB[q] / 10));
+    // residual wobble around a 250 ms moving average (cents): voices drift and waver, keyboards and pads stay flat
+    let rv = 0;
+    for (let k = 0; k < qs.length; k++) {
+      let sm = 0, cn = 0;
+      for (let m = Math.max(0, k - 12); m <= Math.min(qs.length - 1, k + 12); m++) { sm += pB[qs[m]]; cn++; }
+      rv += (pB[qs[k]] - sm / cn) ** 2;
+    }
+    c.resid = Math.sqrt(rv / qs.length) * 10;
+    contours.push(c);
+  }
+  // voicing: the vocal is normally the strongest centred line, so compare each contour with the
+  // typical strength of the strong ones (length-weighted 75th percentile of mean salience)
+  const byMean = contours.slice().sort((x, y) => x.mean - y.mean);
+  let totalLen = 0; for (const c of byMean) totalLen += c.qs.length;
+  let acc = 0, ref = 0;
+  for (const c of byMean) { acc += c.qs.length; if (acc >= 0.75 * totalLen) { ref = c.mean; break; } }
+  let kept = contours.filter(c => {
+    if (c.mean < 0.35 * ref) return false;
+    const flat = !c.vib && c.qs.length >= 20 && c.resid < 1.2;
+    return !(flat && c.mean < 0.7 * ref);
+  });
+  // octave duplicates and outliers relative to a slowly moving "melody pitch mean"
+  const meanTrack = list => {
+    const num = new Float64Array(n), den = new Float64Array(n);
+    for (const c of list) for (const q of c.qs) { const i = frameOf[q]; num[i] += pB[q] * c.total; den[i] += c.total; }
+    const raw = new Float64Array(n).fill(NaN);
+    for (let i = 0; i < n; i++) if (den[i] > 0) raw[i] = num[i] / den[i];
+    // fill gaps by nearest neighbour, then 5 s moving average
+    let lastV = NaN; const fwd = new Float64Array(n);
+    for (let i = 0; i < n; i++) { if (isFinite(raw[i])) lastV = raw[i]; fwd[i] = lastV; }
+    lastV = NaN;
+    for (let i = n - 1; i >= 0; i--) { if (isFinite(raw[i])) lastV = raw[i]; if (!isFinite(fwd[i])) fwd[i] = lastV; }
+    const cum = new Float64Array(n + 1);
+    for (let i = 0; i < n; i++) cum[i + 1] = cum[i] + (isFinite(fwd[i]) ? fwd[i] : 0);
+    const out = new Float64Array(n), Wn = 250;
+    for (let i = 0; i < n; i++) { const a = Math.max(0, i - Wn), b = Math.min(n, i + Wn + 1); out[i] = (cum[b] - cum[a]) / (b - a); }
+    return out;
+  };
+  const distTo = (c, track) => { let d = 0; for (const q of c.qs) d += Math.abs(pB[q] - track[frameOf[q]]); return d / c.qs.length; };
+  for (let it = 0; it < 3 && kept.length; it++) {
+    let track = meanTrack(kept);
+    const drop = new Set();
+    const sorted = kept.slice().sort((x, y) => x.s - y.s);
+    for (let a = 0; a < sorted.length; a++) {
+      for (let b = a + 1; b < sorted.length && sorted[b].s <= sorted[a].e; b++) {
+        const A = sorted[a], B = sorted[b];
+        const ov = Math.min(A.e, B.e) - Math.max(A.s, B.s);
+        if (ov < 0.5 * Math.min(A.e - A.s, B.e - B.s)) continue;
+        if (Math.abs(Math.abs(A.pitch - B.pitch) - 120) > 5) continue;
+        drop.add(distTo(A, track) > distTo(B, track) ? A : B);
+      }
+    }
+    kept = kept.filter(c => !drop.has(c));
+    track = meanTrack(kept);
+    kept = kept.filter(c => distTo(c, track) <= 120);
+  }
+  const bin = new Float32Array(n).fill(-1), best = new Float64Array(n);
+  for (const c of kept) for (const q of c.qs) { const i = frameOf[q]; if (c.total > best[i]) { best[i] = c.total; bin[i] = pB[q]; } }
+  return { bin, kept: kept.length };
+}
+
+// Vibrato check on a contour given in semitones: 4–8 Hz oscillation of 15–150 cents.
+function contourVibrato(st) {
+  if (st.length < 40) return false;
+  const res = [];
+  for (let k = 0; k < st.length; k++) {
+    let s = 0, c = 0;
+    for (let m = Math.max(0, k - 12); m <= Math.min(st.length - 1, k + 12); m++) { s += st[m]; c++; }
+    res.push((st[k] - s / c) * 100);
+  }
+  let sign = 0, cross = 0;
+  for (const v of res) { if (Math.abs(v) < 3) continue; const sg = v > 0 ? 1 : -1; if (sign !== 0 && sg !== sign) cross++; sign = sg; }
+  const rate = cross / 2 / (st.length * HOP);
+  const ab = res.map(Math.abs).sort((x, y) => x - y);
+  const depth = ab[Math.floor(ab.length * 0.9)];
+  return rate >= 4 && rate <= 8 && depth >= 15 && depth <= 150;
 }
 
 // Global tuning offset (semitones, -0.5..0.5) via circular mean of fractional pitch.
@@ -485,7 +808,7 @@ const LONG_FRAMES = 100; // a note held 1 s or longer counts as a long tone
 
 // Singing techniques found on the performance's own pitch curve.
 // shakuri = slides up into a note, kobushi = quick upward flick inside a note,
-// fall = drops off at the end of a note, vib = vibrato, long = steady long tone.
+// fall = drops off at the end of a note, vib = vibrato, long = steady long tone, accent = note attacked louder than it is held.
 function detectTechniques(a) {
   const m = a.midi, notes = a.notes, out = [];
   const owner = new Int32Array(a.n).fill(-1);
@@ -508,6 +831,13 @@ function detectTechniques(a) {
           i = q + 1;
         } else i++;
       }
+    }
+    // アクセント: the first 60 ms peak 4+ dB above the note's median loudness
+    if (nt.e - nt.s >= 15) {
+      let pk = -Infinity; for (let i = nt.s; i <= nt.s + 5; i++) pk = Math.max(pk, a.db[i]);
+      const body = []; for (let i = nt.s + 8; i <= nt.e; i++) body.push(a.db[i]);
+      body.sort((x, y) => x - y);
+      if (pk - body[body.length >> 1] >= 4) out.push({ type: 'accent', f: nt.s, p: c });
     }
     if (nt.vib) out.push({ type: 'vib', f: Math.min(nt.e, nt.s + 40), p: c });
     if (nt.e - nt.s + 1 >= LONG_FRAMES && (nt.vib || (nt.jit !== null && nt.jit <= 6))) out.push({ type: 'long', f: nt.e, p: c });
@@ -545,11 +875,11 @@ function commonScores(a) {
     ls += 0.5 * steady + 0.5 * selfNoteScore(Math.abs(nt.dev)); lc++;
   }
   const long = lc ? ls / lc : null;
-  // テクニック: vibrato 1 pt, shakuri/kobushi/fall 0.5 pt each (each counted up to 4 times), 6 pt = full marks
+  // テクニック: vibrato 1 pt, shakuri/kobushi/fall/accent 0.5 pt each (each counted up to 4 times), 6 pt = full marks
   const techs = detectTechniques(a);
-  const counts = { shakuri: 0, kobushi: 0, vib: 0, fall: 0, long: 0 };
+  const counts = { shakuri: 0, kobushi: 0, fall: 0, vib: 0, accent: 0, long: 0 };
   for (const x of techs) counts[x.type]++;
-  const pts = Math.min(counts.vib, 4) + 0.5 * (Math.min(counts.shakuri, 4) + Math.min(counts.kobushi, 4) + Math.min(counts.fall, 4));
+  const pts = Math.min(counts.vib, 4) + 0.5 * (Math.min(counts.shakuri, 4) + Math.min(counts.kobushi, 4) + Math.min(counts.fall, 4) + Math.min(counts.accent, 4));
   const tech = Math.min(1, pts / 6);
   return { jitter, stab, range, dyn, vib, long, longCount: lc, techs, counts, tech };
 }
@@ -601,7 +931,7 @@ function evalSelf(a) {
   const worst = a.notes.filter(nt => Math.abs(nt.dev) > 20)
     .sort((x, y) => Math.abs(y.dev) - Math.abs(x.dev)).slice(0, 4)
     .map(nt => ({ t: nt.s * HOP, label: noteName(nt.q) + '（' + solfName(nt.q) + '）', dev: nt.dev }));
-  const bars = a.notes.map(nt => ({ s: nt.s, e: nt.e, p: nt.q + a.off, score: nt.score }));
+  const bars = a.notes.map(nt => ({ s: nt.s, e: nt.e, p: nt.q + a.off, score: nt.score, hf: nt.score }));
   const phrases = groupPhrases(a.notes.map(nt => ({ s: nt.s, e: nt.e, q: nt.q, w: nt.e - nt.s + 1, sc: nt.score })));
   for (const ph of phrases) {
     let n = 0, d = 0;
@@ -681,7 +1011,10 @@ function evalRef(u, r, L, octFree) {
     .map(nt => ({ nt, avg: nt.cnt ? nt.acc / nt.len : 0 }))
     .filter(o => o.avg < 0.7).sort((x, y) => x.avg - y.avg).slice(0, 4)
     .map(o => ({ t: Math.max(0, (o.nt.s + L) * HOP), label: noteName(o.nt.q + shift) + '（' + solfName(o.nt.q + shift) + '）', hit: o.avg, sung: o.nt.cnt / o.nt.len }));
-  const bars = r.notes.map(nt => ({ s: nt.s + L, e: nt.e + L, p: nt.q + r.off + shift, j0: nt.s }));
+  const bars = r.notes.map(nt => {
+    let h = 0; for (let j = nt.s; j <= nt.e; j++) if (refHit[j] === 1) h++;
+    return { s: nt.s + L, e: nt.e + L, p: nt.q + r.off + shift, j0: nt.s, hf: h / nt.len };
+  });
   const phrases = groupPhrases(r.notes.map(nt => ({ s: nt.s + L, e: nt.e + L, q: nt.q + shift, acc: nt.acc, len: nt.len })));
   for (const ph of phrases) {
     let n = 0, d = 0;
@@ -744,13 +1077,176 @@ function sampleSpecs() {
 }
 /*DSP-END*/
 
+/*LYR-START*/
+/* ---------- Lyrics: parsing, furigana, timing ---------- */
+const KANJI_RE = /[㐀-鿿豈-﫿々〆ヵヶ]/;
+const SMALL_KANA = /[ぁぃぅぇぉゃゅょゎァィゥェォャュョヮ]/;
+const kataToHira = s => s.replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
+const fmtLrcTime = t => { t = Math.max(0, t); const m = Math.floor(t / 60), s = t - m * 60; return String(m).padStart(2, '0') + ':' + s.toFixed(2).padStart(5, '0'); };
+
+// Ruby notations: {base|reading}, ｜base《reading》, base《reading》 and base(reading) / base（reading） after kanji.
+function parseRuby(str) {
+  const segs = [];
+  const push = (b, r) => {
+    if (!b) return;
+    const last = segs[segs.length - 1];
+    if (!r && last && !last.r) last.b += b; else segs.push({ b, r: r || '' });
+  };
+  const re = /\{([^{}|]+)\|([^{}]*)\}|[|｜]([^|｜《》]+)《([^《》]*)》|([㐀-鿿豈-﫿々〆ヵヶ]+)(?:《([^《》]*)》|[(（]([぀-ゟ゠-ヿー・ 　]+)[)）])/g;
+  let pos = 0, m;
+  while ((m = re.exec(str))) {
+    push(str.slice(pos, m.index));
+    if (m[1] !== undefined) push(m[1], m[2].trim());
+    else if (m[3] !== undefined) push(m[3], m[4].trim());
+    else push(m[5], (m[6] !== undefined ? m[6] : m[7]).trim());
+    pos = re.lastIndex;
+  }
+  push(str.slice(pos));
+  return segs;
+}
+const segsText = segs => segs.map(s => s.b).join('');
+const segsToNotation = segs => segs.map(s => s.r ? '{' + s.b + '|' + s.r + '}' : s.b).join('');
+
+// LRC ([mm:ss.xx] per line, optional <mm:ss.xx> word times, [offset:ms]) or plain text (one lyric line per line).
+function parseLyrics(text) {
+  const out = { lines: [], timed: false, offset: 0, title: '' };
+  const tagRe = /\[(\d{1,3}):(\d{1,2}(?:[.:]\d{1,3})?)\]/g;
+  const toSec = (m, s) => +m * 60 + parseFloat(String(s).replace(':', '.'));
+  const rows = String(text || '').replace(/^﻿/, '').split(/\r?\n/);
+  let anyTime = false;
+  for (const raw of rows) if (/^\s*\[\d{1,3}:\d{1,2}/.test(raw)) { anyTime = true; break; }
+  for (const raw of rows) {
+    const meta = raw.match(/^\s*\[(ti|ar|al|by|offset|length|re|ve|au):([^\]]*)\]\s*$/i);
+    if (meta) { if (/offset/i.test(meta[1])) out.offset = (+meta[2] || 0) / 1000; if (/ti/i.test(meta[1])) out.title = meta[2].trim(); continue; }
+    let rest = raw, times = [], m;
+    tagRe.lastIndex = 0;
+    while ((m = rest.match(/^\s*\[(\d{1,3}):(\d{1,2}(?:[.:]\d{1,3})?)\]/))) { times.push(toSec(m[1], m[2])); rest = rest.slice(m[0].length); }
+    // word timing <mm:ss.xx>
+    let words = null;
+    if (/<\d{1,3}:\d{1,2}(?:[.:]\d{1,3})?>/.test(rest)) {
+      words = []; let plain = '';
+      const parts = rest.split(/<(\d{1,3}):(\d{1,2}(?:[.:]\d{1,3})?)>/);
+      for (let k = 0; k < parts.length; k++) {
+        if (k % 3 === 0) plain += parts[k];
+        else if (k % 3 === 1) { words.push({ t: toSec(parts[k], parts[k + 1]), at: segsText(parseRuby(plain)).length }); k++; }
+      }
+      rest = plain;
+    }
+    const txt = rest.trim();
+    if (anyTime) {
+      for (const t of times) out.lines.push({ t, segs: parseRuby(txt), words: words && times.length === 1 ? words : null, blank: !txt });
+    } else if (txt) out.lines.push({ t: null, segs: parseRuby(txt), words: null, blank: false });
+  }
+  if (anyTime) {
+    out.timed = true;
+    out.lines.sort((a, b) => a.t - b.t);
+    for (const l of out.lines) { l.t -= out.offset; if (l.words) for (const w of l.words) w.t -= out.offset; }
+    // blank timed lines only mark where the previous line ends
+    for (let k = 0; k < out.lines.length; k++) if (out.lines[k].blank && k > 0) out.lines[k - 1].endAt = out.lines[k].t;
+    out.lines = out.lines.filter(l => !l.blank);
+  }
+  return out;
+}
+
+function lyricsToLrc(lines, title) {
+  const head = title ? '[ti:' + title + ']\n' : '';
+  return head + lines.map(l => (l.t !== null && isFinite(l.t) ? '[' + fmtLrcTime(l.t) + ']' : '') + segsToNotation(l.segs)).join('\n') + '\n';
+}
+
+// How long each character "takes" when singing (used to pace the colour wipe).
+function charWeights(segs) {
+  const w = [];
+  for (const sg of segs) {
+    const chars = Array.from(sg.b);
+    if (sg.r) {
+      const mora = Array.from(sg.r).filter(c => !SMALL_KANA.test(c) && !/\s/.test(c)).length || chars.length;
+      for (const c of chars) w.push(/\s/.test(c) ? 0 : mora / chars.length);
+      continue;
+    }
+    // latin words: spread the word's syllables (vowel groups) over its letters
+    let k = 0;
+    while (k < chars.length) {
+      if (/[A-Za-z']/.test(chars[k])) {
+        let e = k; while (e < chars.length && /[A-Za-z']/.test(chars[e])) e++;
+        const word = chars.slice(k, e).join('');
+        const syl = Math.max(1, (word.toLowerCase().match(/[aeiouy]+/g) || []).length);
+        for (let q = k; q < e; q++) w.push(syl / (e - k));
+        k = e; continue;
+      }
+      const c = chars[k];
+      w.push(/[\s、。，．,.!?！？「」『』（）()・…〜~♪-]/.test(c) ? 0 : SMALL_KANA.test(c) ? 0 : c === 'っ' || c === 'ッ' ? 0.5 : 1);
+      k++;
+    }
+  }
+  return w;
+}
+
+// Place untimed lines on the sung notes: lines take consecutive runs of notes whose sung time matches
+// the line's share of syllables, preferring to break where the singer pauses.
+// units: [{s, e}] seconds, sorted. Returns start time per line (seconds).
+function assignLines(weights, units) {
+  const M = weights.length;
+  if (!M || !units.length) return weights.map(() => null);
+  // merge legato notes so lines rarely break mid-word
+  const U = [];
+  for (const u of units) { const last = U[U.length - 1]; if (last && u.s - last.e < 0.12) last.e = Math.max(last.e, u.e), last.v += u.e - u.s; else U.push({ s: u.s, e: u.e, v: u.e - u.s }); }
+  const n = U.length;
+  if (n < M) { // fewer sung blocks than lines: spread lines evenly over the sung span
+    const t0 = U[0].s, t1 = U[n - 1].e;
+    return weights.map((_, k) => t0 + (t1 - t0) * k / M);
+  }
+  const cv = new Float64Array(n + 1); for (let k = 0; k < n; k++) cv[k + 1] = cv[k] + U[k].v;
+  const W = weights.reduce((a, b) => a + b, 0) || M, V = cv[n];
+  const MAXSPAN = Math.max(8, Math.ceil(3 * n / M));
+  const INF = 1e18;
+  const dp = new Float64Array((M + 1) * (n + 1)).fill(INF), from = new Int32Array((M + 1) * (n + 1)).fill(-1);
+  dp[0] = 0;
+  for (let i = 1; i <= M; i++) {
+    const exp = Math.max(0.3, weights[i - 1] / W * V);
+    for (let j = i; j <= n - (M - i); j++) {
+      let best = INF, arg = -1;
+      for (let a = Math.max(i - 1, j - MAXSPAN); a < j; a++) {
+        const prev = dp[(i - 1) * (n + 1) + a]; if (prev >= INF) continue;
+        const dur = cv[j] - cv[a];
+        const gap = a > 0 ? U[a].s - U[a - 1].e : 0;
+        const c = prev + ((dur - exp) / exp) ** 2 - 0.6 * Math.min(gap, 2);
+        if (c < best) { best = c; arg = a; }
+      }
+      dp[i * (n + 1) + j] = best; from[i * (n + 1) + j] = arg;
+    }
+  }
+  const starts = new Array(M);
+  let j = n;
+  for (let i = M; i >= 1; i--) { const a = from[i * (n + 1) + j]; starts[i - 1] = U[Math.max(0, a)].s; j = a; }
+  return starts;
+}
+
+// Furigana from kuromoji tokens: kanji runs get the matching part of the reading (okurigana stays plain).
+function rubyFromTokens(tokens) {
+  const segs = [];
+  const push = (b, r) => { const last = segs[segs.length - 1]; if (!r && last && !last.r) last.b += b; else segs.push({ b, r: r || '' }); };
+  for (const tk of tokens) {
+    const surf = tk.surface_form, rd = tk.reading && tk.reading !== '*' ? kataToHira(tk.reading) : '';
+    if (!KANJI_RE.test(surf) || !rd) { push(surf); continue; }
+    const runs = surf.match(/[㐀-鿿豈-﫿々〆ヵヶ]+|[^㐀-鿿豈-﫿々〆ヵヶ]+/g);
+    const esc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pat = new RegExp('^' + runs.map(r => KANJI_RE.test(r) ? '(.+?)' : esc(kataToHira(r))).join('') + '$');
+    const m = rd.match(pat);
+    if (!m) { push(surf, rd); continue; }
+    let g = 1;
+    for (const r of runs) { if (KANJI_RE.test(r)) push(r, m[g++]); else push(r); }
+  }
+  return segs;
+}
+/*LYR-END*/
+
 /* ---------- App ---------- */
 const $ = id => document.getElementById(id);
 const css = getComputedStyle(document.documentElement);
 const C = name => css.getPropertyValue(name).trim();
 const COL = { gold: C('--gold'), cyan: C('--cyan'), coral: C('--coral'), amber: C('--amber'), good: C('--good'), fg: C('--fg'), muted: C('--muted'), line: C('--line') };
 
-const S = { perf: null, ref: null, refIsSample: false, mode: 'self', autoTune: true, octFree: true, lag: 0, ev: null, ylo: 55, yhi: 79, videoURL: null };
+const S = { perf: null, ref: null, refIsSample: false, mode: 'self', source: 'auto', lyr: null, lyrDisp: null, lyrOff: 0, lyrKey: null, wipe: '#E8243C', furi: true, tap: null, pages: [], pageRange: [], autoTune: true, octFree: true, lag: 0, ev: null, ylo: 55, yhi: 79, videoURL: null };
 const P = { ctx: null, src: null, startCtx: 0, offset: 0, playing: false, token: 0, raf: 0 };
 
 function fmtTime(t) { t = Math.max(0, t); const m = Math.floor(t / 60), s = Math.floor(t % 60); return m + ':' + String(s).padStart(2, '0'); }
@@ -762,21 +1258,47 @@ function decodeAudio(ab) {
   const ctx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 1, 44100);
   return new Promise((res, rej) => { const p = ctx.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); });
 }
-async function toMono(buffer) {
+// Render to 2 channels at a modest rate (mono files come back with identical channels).
+async function toChannels(buffer) {
   for (const sr of [16000, 22050, 44100]) {
     try {
       const len = Math.ceil(buffer.duration * sr);
-      const off = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, len, sr);
+      const off = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, len, sr);
       const src = off.createBufferSource(); src.buffer = buffer; src.connect(off.destination); src.start();
       const out = await off.startRendering();
-      return { data: out.getChannelData(0), sr };
+      return { L: out.getChannelData(0), R: out.getChannelData(1), sr };
     } catch (e) { /* try next rate */ }
   }
   throw new Error('resample failed');
 }
-async function analyzeData(data, sr) {
-  const { f, r } = await detectPitch(data, sr, progress);
-  return postProcess(f, r);
+// S.source: 'auto' | 'vocal' (a cappella → YIN) | 'mix' (backing track present → melody extractor)
+async function analyzeChannels(L, R, sr) {
+  const mono = L === R ? L : L.map((v, i) => (v + R[i]) / 2);
+  let useMix = S.source === 'mix';
+  if (S.source === 'auto') {
+    // quick look at every 4th frame: share of loud frames that are cleanly periodic is ~1 for a solo voice, well below for a band mix
+    const y = await detectPitch(mono, sr, p => progress(p * 0.15), 4);
+    const vals = []; for (let i = 0; i < y.r.length; i++) if (y.r[i] > 0) vals.push(y.r[i]);
+    vals.sort((a, b) => a - b);
+    const gate = vals.length ? vals[Math.floor(vals.length * 0.99)] * 0.04 : 0;
+    let loud = 0, per = 0;
+    for (let i = 0; i < y.r.length; i++) if (y.r[i] > 0 && y.r[i] >= gate) { loud++; if (y.ap[i] < 0.2) per++; }
+    const periodic = loud ? per / loud : 1;
+    let dE = 0, sE = 0;
+    if (L !== R) for (let i = 0; i < L.length; i += 7) { const d = L[i] - R[i], m = L[i] + R[i]; dE += d * d; sE += m * m; }
+    useMix = periodic < 0.75 || (sE > 0 && dE / sE > 0.01);
+  }
+  const p0 = S.source === 'auto' ? 0.15 : 0;
+  let pp;
+  if (useMix) {
+    const m = await extractMelody(L, R, sr, p => progress(p0 + p * (1 - p0)));
+    pp = postProcess(m.f, m.r);
+  } else {
+    const y = await detectPitch(mono, sr, p => progress(p0 + p * (1 - p0)));
+    pp = postProcess(y.f, y.r);
+  }
+  pp.method = useMix ? 'mix' : 'vocal';
+  return pp;
 }
 function makeBuffer(data, sr) {
   const ctx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 1, 44100);
@@ -810,9 +1332,207 @@ function recompute(autoAlign) {
   $('msA4').textContent = (440 * Math.pow(2, S.perf.a.off / 12)).toFixed(1);
   if (S.mode === 'ref' && S.ref) $('msA4').textContent = (440 * Math.pow(2, S.ref.a.off / 12)).toFixed(1);
   if (S.perf.a.notes.length < 3) toast('声をほとんど検出できませんでした。ボーカルがはっきり聞こえる音源を試してください。');
+  layoutLyrics();
   drawOverview();
   render();
   if (!$('result').hidden) showResult(false);
+}
+
+/* ---------- Lyrics (app side) ---------- */
+// Lyric times are kept on the guide's timeline (お手本 when comparing, otherwise the loaded song)
+// and shifted onto the playback timeline here.
+const SAMPLE_LYRICS = '青い風吹く\n遠い道\n今日も君と歌う\n';
+const lyrShift = () => (S.ev && S.ev.mode === 'ref' ? S.ev.L * HOP : 0) + S.lyrOff;
+const segsOf = l => (S.furi && l.dispSegs) || l.segs;
+
+function layoutLyrics() {
+  const ev = S.ev;
+  S.lyrDisp = null;
+  if (ev) {
+    const sh = lyrShift();
+    const bars = ev.bars.map(b => ({ s: b.s * HOP, e: (b.e + 1) * HOP })).sort((x, y) => x.s - y.s);
+    const ly = S.lyr;
+    if (ly && ly.lines.length) {
+      const lines = ly.lines;
+      if (!ly.timed) {
+        const st = assignLines(lines.map(l => charWeights(segsOf(l)).reduce((x, y) => x + y, 0) || 1), bars);
+        lines.forEach((l, k) => { l.t = st[k] === null ? null : st[k] - sh; });
+      }
+      const D = [];
+      lines.forEach((l, k) => {
+        if (l.t === null || !isFinite(l.t)) return;
+        const t0 = l.t + sh;
+        let nextT = Infinity;
+        for (let q = k + 1; q < lines.length; q++) if (lines[q].t !== null && isFinite(lines[q].t)) { nextT = lines[q].t + sh; break; }
+        let t1;
+        if (l.endAt !== undefined) t1 = l.endAt + sh;
+        else {
+          let le = -Infinity;
+          for (const b of bars) if (b.s >= t0 - 0.15 && b.s < nextT) le = Math.max(le, b.e);
+          t1 = isFinite(le) ? Math.min(nextT, le + 0.1) : Math.min(nextT, t0 + 5);
+        }
+        if (!(t1 > t0 + 0.2)) t1 = Math.min(nextT, t0 + 2);
+        const segs = segsOf(l), w = charWeights(segs);
+        const voiced = [];
+        for (const b of bars) {
+          const x = Math.max(t0, b.s), y = Math.min(t1, b.e);
+          if (y <= x) continue;
+          const last = voiced[voiced.length - 1];
+          if (last && x - last[1] < 0.05) last[1] = Math.max(last[1], y); else voiced.push([x, y]);
+        }
+        let V = 0; for (const [x, y] of voiced) V += y - x;
+        if (V < 0.3) { voiced.length = 0; voiced.push([t0, t1]); V = t1 - t0; }
+        const words = l.words ? l.words.map(x => ({ wt: x.t + sh, at: x.at })) : null;
+        D.push({ t0, t1, segs, w, W: w.reduce((x, y) => x + y, 0) || 1, n: w.length, voiced, V, words });
+      });
+      S.lyrDisp = D;
+    } else {
+      // no lyrics: the guide's do-re-mi stands in as the telop
+      const D = ev.phrases.map(ph => {
+        const syl = ph.items.map(it => solfName(it.q));
+        const words = []; let at = 0;
+        ph.items.forEach((it, k) => { words.push({ wt: it.s * HOP, we: (it.e + 1) * HOP, at, len: Array.from(syl[k]).length }); at += Array.from(syl[k]).length + 1; });
+        const text = syl.join(' ');
+        return { t0: ph.s * HOP, t1: (ph.e + 1) * HOP, segs: [{ b: text, r: '' }], w: [], W: 1, n: Array.from(text).length, voiced: [], V: 1, words };
+      });
+      D.doremi = true;
+      S.lyrDisp = D;
+    }
+  }
+  buildPages();
+}
+
+let tokenizer = null, tokenizerP = null;
+function loadScript(src) {
+  return new Promise((res, rej) => { const el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = () => rej(new Error(src)); document.head.appendChild(el); });
+}
+function getTokenizer() {
+  if (tokenizer) return Promise.resolve(tokenizer);
+  if (tokenizerP) return tokenizerP;
+  const tryLoad = async (js, dic) => {
+    if (!window.kuromoji) await loadScript(js);
+    return await new Promise((res, rej) => window.kuromoji.builder({ dicPath: dic }).build((err, tk) => err ? rej(err) : res(tk)));
+  };
+  tokenizerP = tryLoad('vendor/kuromoji/kuromoji.js', 'vendor/kuromoji/dict/')
+    .catch(() => tryLoad('https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/build/kuromoji.js', 'https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict/'))
+    .then(tk => (tokenizer = tk))
+    .catch(e => { tokenizerP = null; throw e; });
+  return tokenizerP;
+}
+async function addFurigana(ly) {
+  if (!S.furi || !ly || ly.furiDone) return;
+  if (!ly.lines.some(l => l.segs.some(sg => !sg.r && KANJI_RE.test(sg.b)))) return;
+  updateLyrStatus('ふりがな用の辞書を読み込んでいます…（初回のみ）');
+  try {
+    const tk = await getTokenizer();
+    for (const l of ly.lines) l.dispSegs = l.segs.flatMap(sg => sg.r || !KANJI_RE.test(sg.b) ? [sg] : rubyFromTokens(tk.tokenize(sg.b)));
+    ly.furiDone = true;
+  } catch (e) { toast('ふりがな用の辞書を読み込めませんでした。{漢字|かんじ} の書き方なら手動でふりがなを付けられます。'); }
+}
+
+function lyrStoreKey() { return S.lyrKey ? 'karaoke-lyrics:' + S.lyrKey : null; }
+function saveLyrics() {
+  const key = lyrStoreKey(); if (!key) return;
+  try { if (S.lyr) localStorage.setItem(key, S.lyr.text); else localStorage.removeItem(key); } catch (e) {}
+}
+function savedLyrics() { const key = lyrStoreKey(); if (!key) return null; try { return localStorage.getItem(key); } catch (e) { return null; } }
+
+async function setLyrics(text, src, opts = {}) {
+  const ly = parseLyrics(text);
+  if (!ly.lines.length) { S.lyr = null; if (opts.save !== false) saveLyrics(); layoutLyrics(); render(); updateLyrStatus(); return; }
+  ly.src = src || ''; ly.text = text; ly.local = !!opts.local;
+  S.lyr = ly;
+  $('lyrText').value = text;
+  if (opts.save !== false) saveLyrics();
+  layoutLyrics(); render(); updateLyrStatus();
+  await addFurigana(ly);
+  if (S.lyr === ly) { layoutLyrics(); render(); updateLyrStatus(); }
+}
+function clearLyrics() { S.lyr = null; $('lyrText').value = ''; layoutLyrics(); render(); updateLyrStatus(); }
+// Called whenever a new song/file becomes the main track.
+async function lyricsForSong(key, url, name) {
+  S.lyrKey = key;
+  const saved = savedLyrics();
+  if (saved) { await setLyrics(saved, name ? name + '（このブラウザで編集した版）' : 'このブラウザで編集した版', { save: false, local: true }); return; }
+  if (url) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      await setLyrics(decodeText(await res.arrayBuffer()), decodeURIComponent(url.split('?')[0].split('/').pop()), { save: false });
+      return;
+    } catch (e) { toast('歌詞ファイルを読み込めませんでした：' + e.message); }
+  }
+  clearLyrics();
+}
+function decodeText(ab) {
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(ab); }
+  catch (e) { try { return new TextDecoder('shift_jis').decode(ab); } catch (e2) { return new TextDecoder().decode(ab); } }
+}
+function updateLyrStatus(msg) {
+  const el = $('lyrStatus');
+  if (msg) { el.textContent = msg; return; }
+  const ly = S.lyr;
+  if (!ly) { el.textContent = '歌詞はまだありません。ない間は、ガイドの音をドレミで表示します。'; return; }
+  const timing = S.tap ? 'タップで合わせ中' : ly.timed ? (ly.tapped ? 'タップで合わせた時刻' : 'ファイルの時刻') : '歌声に合わせて自動で割り当て（ずれるときは「タップで合わせる」）';
+  el.textContent = (ly.src ? ly.src + '・' : '') + ly.lines.length + '行・タイミング：' + timing;
+}
+
+// Tap-to-sync: press once at the start of each lyric line while the song plays.
+function startTap() {
+  if (!S.lyr || !S.lyr.lines.length) { toast('先に歌詞を読み込むか、貼り付けて「反映する」を押してください。'); return; }
+  if (!S.perf) return;
+  closeResult();
+  S.tap = { k: 0 };
+  for (const l of S.lyr.lines) { l.t = null; delete l.endAt; l.words = null; }
+  S.lyr.timed = true;
+  $('tapBar').hidden = false;
+  updateTap(); layoutLyrics(); updateLyrStatus();
+  seek(0); if (!P.playing) play();
+}
+function updateTap() {
+  const ly = S.lyr, k = S.tap.k;
+  $('tapInfo').textContent = (k + 1) + ' / ' + ly.lines.length + ' 行目「' + segsText(ly.lines[k].segs) + '」の歌い出しで押す';
+}
+function tapMark() {
+  if (!S.tap) return;
+  const ly = S.lyr;
+  ly.lines[S.tap.k].t = Math.max(0, curTime() - lyrShift() - 0.1); // ~0.1 s for reaction time
+  S.tap.k++;
+  layoutLyrics();
+  if (S.tap.k >= ly.lines.length) endTap(); else updateTap();
+}
+function endTap() {
+  if (!S.tap) return;
+  const ly = S.lyr, done = S.tap.k;
+  S.tap = null; $('tapBar').hidden = true;
+  if (done < ly.lines.length) {
+    // the rest are placed automatically on the singing after the last tap
+    // they start after the phrase in which the last tap happened
+    const sh = lyrShift(), tapT = done ? ly.lines[done - 1].t + sh + 0.1 : -1;
+    let from = tapT;
+    for (const ph of S.ev.phrases) if (ph.s * HOP <= tapT + 0.3 && (ph.e + 1) * HOP > tapT) from = Math.max(from, (ph.e + 1) * HOP);
+    const bars = S.ev.bars.map(b => ({ s: b.s * HOP, e: (b.e + 1) * HOP })).filter(b => b.s >= from).sort((x, y) => x.s - y.s);
+    const rest = ly.lines.slice(done);
+    const st = assignLines(rest.map(l => charWeights(segsOf(l)).reduce((x, y) => x + y, 0) || 1), bars);
+    rest.forEach((l, k) => { l.t = st[k] === null ? null : st[k] - sh; });
+    if (done) toast(done + ' 行目まで合わせました。残りは歌声に合わせて自動で割り当てました。');
+  }
+  ly.tapped = true; ly.local = true;
+  ly.text = lyricsToLrc(ly.lines, ly.title);
+  $('lyrText').value = ly.text;
+  saveLyrics(); layoutLyrics(); render(); updateLyrStatus();
+}
+function exportLrc() {
+  const ly = S.lyr;
+  if (!ly) { toast('書き出す歌詞がありません。'); return; }
+  const text = lyricsToLrc(ly.lines, ly.title);
+  $('lyrText').value = text;
+  const base = (S.perf ? S.perf.name : 'lyrics').replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|]/g, '_');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+  a.download = base + '.lrc';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 
 /* ---------- Loading ---------- */
@@ -822,11 +1542,11 @@ async function loadSample() {
   const sp = sampleSpecs();
   const perf = synthMelody(sp.perf), ref = synthMelody(sp.ref);
   busy(true, 'サンプルを解析中…');
-  const ppP = await analyzeData(perf.data, perf.sr);
-  const ppR = await analyzeData(ref.data, ref.sr);
+  const ppP = await analyzeChannels(perf.data, perf.data, perf.sr);
+  const ppR = await analyzeChannels(ref.data, ref.data, ref.sr);
   const bP = makeBuffer(perf.data, perf.sr), bR = makeBuffer(ref.data, ref.sr);
-  S.perf = { name: 'サンプル（合成音声）', buffer: bP, duration: bP.duration, pp: ppP };
-  S.ref = { name: 'サンプルのお手本（ガイドメロディ）', buffer: bR, duration: bR.duration, pp: ppR };
+  S.perf = { name: 'サンプル（合成音声）', buffer: bP, duration: bP.duration, pp: ppP, ch: { L: perf.data, R: perf.data, sr: perf.sr } };
+  S.ref = { name: 'サンプルのお手本（ガイドメロディ）', buffer: bR, duration: bR.duration, pp: ppR, ch: { L: ref.data, R: ref.data, sr: ref.sr } };
   S.refIsSample = true;
   $('srcBadge').textContent = 'サンプル（合成音声・わざと4か所ずらしています）';
   $('refName').textContent = S.ref.name;
@@ -834,6 +1554,10 @@ async function loadSample() {
   recompute(true);
   setupTime();
   busy(false);
+  S.lyrKey = 'sample';
+  const saved = savedLyrics();
+  setLyrics(saved || SAMPLE_LYRICS, saved ? 'サンプルの歌詞（このブラウザで編集した版）' : 'サンプルの歌詞（時刻なし→自動割り当て）', { save: false, local: !!saved });
+  updateSrcInfo();
 }
 
 async function ingest(ab, meta) {
@@ -847,13 +1571,14 @@ async function ingest(ab, meta) {
   try { buffer = await decodeAudio(ab); }
   catch (e) { throw new Error('このファイルから音声を取り出せませんでした。mp3・wav・m4a などの音声ファイルに変換して試してください。'); }
   busy(true, '音程を解析中…（' + fmtTime(buffer.duration) + '）');
-  const { data, sr } = await toMono(buffer);
-  const pp = await analyzeData(data, sr);
-  const item = { name, buffer, duration: buffer.duration, pp };
+  const ch = await toChannels(buffer);
+  const pp = await analyzeChannels(ch.L, ch.R, ch.sr);
+  const item = { name, buffer, duration: buffer.duration, pp, ch };
   if (role === 'perf') {
     S.perf = item;
     P.offset = 0;
     $('srcBadge').textContent = name;
+    if (meta.lyricsKey !== undefined) await lyricsForSong(meta.lyricsKey, meta.lyricsUrl || null, meta.lyricsName || '');
     setVideo(meta.videoSrc, meta.revoke);
     if (S.refIsSample || meta.dropRef) { S.ref = null; S.refIsSample = false; $('refName').textContent = '未選択'; if (!meta.keepMode) setMode('self', false); }
     S.lag = 0; syncLagUI();
@@ -865,6 +1590,7 @@ async function ingest(ab, meta) {
     setMode('ref', false);
     recompute(true);
   }
+  updateSrcInfo();
 }
 
 async function loadFile(file, role) {
@@ -875,7 +1601,7 @@ async function loadFile(file, role) {
     const ab = await file.arrayBuffer();
     const isVideo = file.type.startsWith('video') || VIDEO_EXT.test(file.name);
     const videoSrc = role === 'perf' && isVideo ? URL.createObjectURL(file) : null;
-    await ingest(ab, { name: file.name, role, videoSrc, revoke: true });
+    await ingest(ab, role === 'perf' ? { name: file.name, role, videoSrc, revoke: true, lyricsKey: 'file:' + file.name } : { name: file.name, role, videoSrc, revoke: true });
   } catch (e) { toast(e && e.message ? e.message : String(e)); }
   busy(false);
 }
@@ -919,6 +1645,7 @@ function setVideo(src, revoke) {
 const CONFIG = { owner: '', repo: '', branch: '', dir: 'media' };
 const MEDIA_EXT = /\.(mp3|m4a|aac|wav|ogg|oga|opus|flac|webm|mp4|m4v|mov)$/i;
 const VIDEO_EXT = /\.(mp4|m4v|mov|webm)$/i;
+const LYRIC_EXT = /\.(lrc|txt)$/i;
 const REF_RE = /\.ref\.[^.\/]+$/i;
 const encPath = p => p.split('/').map(encodeURIComponent).join('/');
 
@@ -978,14 +1705,19 @@ async function listLibrary() {
     if (r.ok) { const j = await r.json(); manifest = Array.isArray(j) ? j : (j.songs || []); }
   } catch (e) { /* manifest is optional */ }
   let files = [], err = '';
+  const lyricFiles = new Map();
   if (R.owner && R.repo) {
     try {
       const api = 'https://api.github.com/repos/' + R.owner + '/' + R.repo + '/contents/' + encPath(R.dir) + (R.branch ? '?ref=' + encodeURIComponent(R.branch) : '');
       const r = await fetch(api, { headers: { Accept: 'application/vnd.github+json' } });
       if (r.ok) {
         const arr = await r.json();
-        if (Array.isArray(arr)) files = arr.filter(f => f.type === 'file' && MEDIA_EXT.test(f.name))
-          .map(f => ({ name: f.name, size: f.size, url: R.sameSite ? siteUrl(R, f.name) : f.download_url }));
+        if (Array.isArray(arr)) {
+          files = arr.filter(f => f.type === 'file' && MEDIA_EXT.test(f.name))
+            .map(f => ({ name: f.name, size: f.size, url: R.sameSite ? siteUrl(R, f.name) : f.download_url }));
+          for (const f of arr) if (f.type === 'file' && LYRIC_EXT.test(f.name) && !/^readme/i.test(f.name))
+            lyricFiles.set(f.name.replace(LYRIC_EXT, ''), { name: f.name, url: R.sameSite ? siteUrl(R, f.name) : f.download_url });
+        }
       } else if (r.status === 404) err = R.owner + '/' + R.repo + ' に「' + R.dir + '」フォルダが見つかりません（非公開リポジトリは読めません）。';
       else if (r.status === 403 || r.status === 429) err = 'GitHub API の利用回数の上限に達しました。しばらくしてから「一覧を更新」を押してください。';
       else err = 'GitHub API がエラーを返しました（HTTP ' + r.status + '）。';
@@ -995,6 +1727,7 @@ async function listLibrary() {
     for (const m of manifest) {
       if (m.file) files.push({ name: m.file.split('/').pop(), size: 0, url: resolveFile(R, m.file) });
       if (m.ref) files.push({ name: m.ref.split('/').pop(), size: 0, url: resolveFile(R, m.ref), isRef: true });
+      if (m.lyrics) lyricFiles.set(m.file.split('/').pop().replace(/\.[^.]+$/, ''), { name: m.lyrics.split('/').pop(), url: resolveFile(R, m.lyrics) });
     }
   }
   const byName = new Map(files.map(f => [f.name, f]));
@@ -1009,11 +1742,13 @@ async function listLibrary() {
       const base = f.name.replace(/\.[^.]+$/, '');
       ref = files.find(g => g !== f && REF_RE.test(g.name) && g.name.replace(REF_RE, '') === base) || null;
     }
-    songs.push({ file: f.name, title: m.title || f.name.replace(/\.[^.]+$/, ''), url: f.url, size: f.size, isVideo: VIDEO_EXT.test(f.name), ref });
+    const base = f.name.replace(/\.[^.]+$/, '');
+    const lyrics = m.lyrics ? { name: m.lyrics.split('/').pop(), url: resolveFile(R, m.lyrics) } : lyricFiles.get(base) || null;
+    songs.push({ file: f.name, title: m.title || base, url: f.url, size: f.size, isVideo: VIDEO_EXT.test(f.name), ref, lyrics });
   }
   S.songs = songs;
   renderSongs();
-  if (songs.length) st.textContent = songs.length + ' 曲あります。押すとダウンロードして解析します。お手本は「曲名.ref.mp3」のように名前を付けると自動で組になります。';
+  if (songs.length) st.textContent = songs.length + ' 曲あります。押すとダウンロードして解析します。お手本は「曲名.ref.mp3」、歌詞は「曲名.lrc」のように名前を付けると自動で組になります。';
   else st.textContent = err || ('「' + R.dir + '」フォルダに音声・動画ファイルがまだありません。');
   return songs;
 }
@@ -1030,6 +1765,7 @@ function renderSongs() {
     const add = (txt, cls) => { const x = document.createElement('span'); x.className = 'tag' + (cls ? ' ' + cls : ''); x.textContent = txt; tags.appendChild(x); };
     add(sg.isVideo ? '動画' : '音声');
     if (sg.ref) add('お手本あり', 'ref');
+    if (sg.lyrics) add('歌詞あり', 'ref');
     if (sg.size) add(fmtSize(sg.size));
     b.append(t, tags);
     b.addEventListener('click', () => selectSong(sg));
@@ -1045,7 +1781,7 @@ function markActive(sg) {
 async function selectSong(sg) {
   stopAll(); closeResult(); markActive(sg);
   try {
-    await loadUrl(sg.url, 'perf', sg.title, { dropRef: true, keepMode: !!sg.ref });
+    await loadUrl(sg.url, 'perf', sg.title, { dropRef: true, keepMode: !!sg.ref, lyricsKey: 'song:' + sg.file, lyricsUrl: sg.lyrics ? sg.lyrics.url : null, lyricsName: sg.lyrics ? sg.lyrics.name : '' });
     if (sg.ref) await loadUrl(sg.ref.url, 'ref', sg.title + '（お手本）');
     try {
       const q = new URLSearchParams(location.search); q.set('song', sg.file);
@@ -1124,20 +1860,23 @@ function rr(g, x, y, w, h, r) {
   g.arcTo(x, y + h, x, y + h - r, r); g.lineTo(x, y + r); g.arcTo(x, y, x + r, y, r); g.closePath();
 }
 const stateColor = s => s === 2 ? COL.gold : s === 1 ? COL.amber : s === 0 ? COL.coral : 'rgba(238,240,255,.55)';
-// Karaoke-monitor look: pitch band on top with a fixed judgment line, lyric-style telop underneath.
+// Karaoke-monitor look: a page of pitch bars on top (the cursor moves left → right, then the page turns),
+// technique counters under it, and two lines of lyrics with furigana that change colour as they are sung.
 const TECH = {
   shakuri: { label: 'しゃくり', mark: 'し', color: '#3FDB86' },
   kobushi: { label: 'こぶし', mark: 'こ', color: '#B98CFF' },
-  vib: { label: 'ビブラート', mark: 'ビ', color: '#FF6FB8' },
   fall: { label: 'フォール', mark: 'フ', color: '#5FB0FF' },
-  long: { label: 'ロングトーン', mark: 'ロ', color: '#FFB020' }
+  vib: { label: 'ビブラート', mark: 'ビ', color: '#FF6FB8' },
+  accent: { label: 'アクセント', mark: 'ア', color: '#FF8A3D' },
+  long: { label: 'ロングトーン', mark: 'ロ', color: '#FFC21A' }
 };
-const TECH_ORDER = ['shakuri', 'kobushi', 'vib', 'fall', 'long'];
-const HIT = '#FFD23F', HIT_SOFT = 'rgba(255,214,120,.6)', MISS = 'rgba(64,74,118,.92)';
-const GUIDE_FILL = 'rgba(255,255,255,.42)';
+const TECH_ORDER = ['shakuri', 'kobushi', 'fall', 'vib', 'accent', 'long'];
+const HIT = '#FFD23F', HIT_SOFT = '#FFE79A', MISS = 'rgba(140,150,178,.9)';
+const GUIDE_FILL = '#FFF8DE';
 const FONT_JP = '"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif';
 const FONT_NUM = '"Dela Gothic One","Hiragino Sans",sans-serif';
-const traceColor = s => s === 2 ? '#FFFFFF' : s === 1 ? '#9EDBFF' : s === 0 ? '#FF6B8A' : 'rgba(255,255,255,.7)';
+const INK = '#0B1030';
+const traceColor = s => s === 2 ? '#FFFFFF' : s === 1 ? '#BDE6FF' : s === 0 ? '#FF7A95' : 'rgba(255,255,255,.75)';
 const rateColor = r => r >= 0.9 ? HIT : r >= 0.7 ? '#9EDBFF' : '#FF8FA8';
 // 2 = hit, 1 = close, 0 = missed
 function barFill(ev, b, i) {
@@ -1148,6 +1887,63 @@ function outlined(g, text, x, y, fill, stroke, lw) {
   g.lineJoin = 'round'; g.lineWidth = lw; g.strokeStyle = stroke; g.strokeText(text, x, y);
   g.fillStyle = fill; g.fillText(text, x, y);
 }
+function heart(g, x, y, s) {
+  g.beginPath();
+  g.moveTo(x, y + s * 0.75);
+  g.bezierCurveTo(x - s * 1.25, y - s * 0.05, x - s * 0.7, y - s * 1.05, x, y - s * 0.4);
+  g.bezierCurveTo(x + s * 0.7, y - s * 1.05, x + s * 1.25, y - s * 0.05, x, y + s * 0.75);
+  g.closePath();
+}
+function sparkle(g, x, y, r, color) {
+  g.beginPath();
+  g.moveTo(x, y - r); g.quadraticCurveTo(x, y, x + r, y); g.quadraticCurveTo(x, y, x, y + r);
+  g.quadraticCurveTo(x, y, x - r, y); g.quadraticCurveTo(x, y, x, y - r);
+  g.fillStyle = color; g.fill();
+}
+
+// Pages: one per lyric line (or per group of phrases when there are no lyrics), 4–10 s each.
+function buildPages() {
+  const ev = S.ev; S.pages = []; S.pageRange = [];
+  if (!ev) return;
+  const D = S.lyrDisp && !S.lyrDisp.doremi ? S.lyrDisp : null;
+  const blocks = D ? D.map(L => ({ t0: L.t0, t1: L.t1 })) : ev.phrases.map(ph => ({ t0: ph.s * HOP, t1: (ph.e + 1) * HOP }));
+  const pages = [];
+  for (const b of blocks) {
+    const last = pages[pages.length - 1];
+    if (last && b.t0 - last.t1 < 2.5 && b.t1 - last.t0 <= 10 && (last.t1 - last.t0 < 4 || b.t1 - last.t0 <= 6.5)) last.t1 = Math.max(last.t1, b.t1);
+    else pages.push({ t0: b.t0, t1: b.t1 });
+  }
+  const out = [];
+  for (const p of pages) {
+    const len = p.t1 - p.t0;
+    if (len <= 12) { out.push(p); continue; }
+    const k = Math.ceil(len / 8);
+    for (let q = 0; q < k; q++) out.push({ t0: p.t0 + len * q / k, t1: p.t0 + len * (q + 1) / k });
+  }
+  for (const p of out) { p.t0 -= 0.3; p.t1 += 0.3; }
+  S.pages = out;
+}
+function pageAt(t) {
+  const P = S.pages;
+  if (!P.length) return -1;
+  for (let k = 0; k < P.length; k++) if (t < P[k].t1 + 0.15) return k;
+  return P.length - 1;
+}
+function pageRange(k) {
+  if (S.pageRange[k]) return S.pageRange[k];
+  const p = S.pages[k], ev = S.ev, a = S.perf.a;
+  let lo = Infinity, hi = -Infinity;
+  for (const b of ev.bars) if ((b.e + 1) * HOP > p.t0 && b.s * HOP < p.t1) { lo = Math.min(lo, b.p); hi = Math.max(hi, b.p); }
+  const f0 = Math.max(0, Math.floor(p.t0 / HOP)), f1 = Math.min(a.n - 1, Math.ceil(p.t1 / HOP));
+  const sung = [];
+  for (let i = f0; i <= f1; i += 3) if (isFinite(a.midi[i])) sung.push(a.midi[i]);
+  sung.sort((x, y) => x - y);
+  if (sung.length > 4) { lo = Math.min(lo, sung[Math.floor(sung.length * 0.05)]); hi = Math.max(hi, sung[Math.floor(sung.length * 0.95)]); }
+  if (!isFinite(lo)) { lo = S.ylo + 2; hi = S.yhi - 2; }
+  lo -= 2; hi += 2;
+  if (hi - lo < 9) { const c = (hi + lo) / 2; lo = c - 4.5; hi = c + 4.5; }
+  return (S.pageRange[k] = { lo, hi });
+}
 
 function render(tArg) {
   const t = tArg === undefined ? curTime() : tArg;
@@ -1155,39 +1951,32 @@ function render(tArg) {
   if (!W) return;
   g.clearRect(0, 0, W, H);
   const ev = S.ev, a = S.perf && S.perf.a;
-  const top = Math.round(H * 0.13), bot = Math.round(H * 0.6), bandH = bot - top;
-  const view = W < 600 ? 4.5 : 7, JR = 0.24, JX = Math.round(W * JR);
-  const x0 = t - view * JR;
-  const X = tm => (tm - x0) / view * W;
-  const span = S.yhi - S.ylo;
-  const Y = m => bot - (m - S.ylo) / span * bandH;
-  const lane = bandH / span;
-  // pitch band
-  g.fillStyle = 'rgba(3,8,34,.68)'; g.fillRect(0, top - 6, W, bandH + 12);
-  g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(0, top - 6, W, 1); g.fillRect(0, bot + 5, W, 1);
-  for (let q = Math.ceil(S.ylo); q <= Math.floor(S.yhi); q++) {
-    g.fillStyle = ((q % 12) + 12) % 12 === 0 ? 'rgba(120,190,255,.16)' : 'rgba(255,255,255,.035)';
-    g.fillRect(0, Math.round(Y(q - 0.5)), W, 1);
-  }
-  g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(0, top - 6, JX, bandH + 12);
-  const judge = () => {
-    g.save(); g.shadowColor = 'rgba(160,220,255,.9)'; g.shadowBlur = 10;
-    g.fillStyle = 'rgba(235,245,255,.95)'; g.fillRect(JX - 1, top - 6, 2, bandH + 12); g.restore();
-  };
-  if (!ev || !a) { judge(); updateReadouts(t, -1, NaN); return; }
+  const top = Math.round(H * 0.095), bot = Math.round(H * 0.37), bandH = bot - top;
+  const Lx = Math.round(W * 0.03), Rx = Math.round(W * 0.97);
+  // frosted pitch band
+  g.fillStyle = 'rgba(255,255,255,.2)'; g.fillRect(0, top, W, bandH);
+  g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect(0, top, W, 1); g.fillRect(0, bot - 1, W, 1);
+  const k = ev && a ? pageAt(t) : -1;
+  if (k < 0) { drawChips(g, ev, -1, W, H, bot); drawTelop(g, t, W, H); if (ev && a) updateReadouts(t, Math.floor(t / HOP), NaN); return; }
+  const pg = S.pages[k], rg = pageRange(k);
+  const X = tm => Lx + (tm - pg.t0) / (pg.t1 - pg.t0) * (Rx - Lx);
+  const Y = m => bot - 4 - (m - rg.lo) / (rg.hi - rg.lo) * (bandH - 8);
+  const lane = (bandH - 8) / (rg.hi - rg.lo);
+  g.fillStyle = 'rgba(255,255,255,.12)';
+  for (let q = Math.ceil(rg.lo); q <= rg.hi; q++) if (((q % 12) + 12) % 12 === 0) g.fillRect(0, Math.round(Y(q)), W, 1);
   const nowF = Math.floor(t / HOP);
-  const f0 = Math.max(0, Math.floor(x0 / HOP)), f1 = Math.min(a.n - 1, Math.ceil((x0 + view) / HOP));
-  const bh = clamp(lane * 0.72, 5, 18);
-  // guide bars: white until reached, then golden where the pitch matched and grey where it did not
+  const bh = clamp(lane * 0.8, 5, 14);
+  g.save(); g.beginPath(); g.rect(0, top + 1, W, bandH - 2); g.clip();
+  // bars
   for (const b of ev.bars) {
-    if ((b.e + 1) * HOP < x0 || b.s * HOP > x0 + view) continue;
+    if ((b.e + 1) * HOP < pg.t0 || b.s * HOP > pg.t1) continue;
     const bx = X(b.s * HOP), bw = Math.max(4, X((b.e + 1) * HOP) - bx), by = Y(b.p) - bh / 2;
-    rr(g, bx, by, bw, bh, 3);
+    rr(g, bx, by, bw, bh, bh / 2);
     g.fillStyle = GUIDE_FILL; g.fill();
-    g.lineWidth = 1.2; g.strokeStyle = 'rgba(255,255,255,.92)'; g.stroke();
+    g.lineWidth = 1; g.strokeStyle = 'rgba(150,115,40,.55)'; g.stroke();
     const upto = Math.min(b.e, nowF);
     if (upto < b.s) continue;
-    g.save(); rr(g, bx, by, bw, bh, 3); g.clip();
+    g.save(); rr(g, bx, by, bw, bh, bh / 2); g.clip();
     g.fillStyle = MISS; g.fillRect(bx, by, X((upto + 1) * HOP) - bx, bh);
     let i = b.s;
     while (i <= upto) {
@@ -1197,7 +1986,7 @@ function render(tArg) {
         const xa = X(i * HOP), xb = X((j + 1) * HOP);
         if (lv === 2) {
           const gr = g.createLinearGradient(0, by, 0, by + bh);
-          gr.addColorStop(0, '#FFF6B8'); gr.addColorStop(0.45, HIT); gr.addColorStop(1, '#FF9A1F');
+          gr.addColorStop(0, '#FFF7B0'); gr.addColorStop(0.5, HIT); gr.addColorStop(1, '#FF9A1F');
           g.fillStyle = gr;
         } else g.fillStyle = HIT_SOFT;
         g.fillRect(xa, by, xb - xa + 0.5, bh);
@@ -1206,139 +1995,246 @@ function render(tArg) {
     }
     g.restore();
     if (nowF <= b.e && barFill(ev, b, nowF) === 2) {
-      g.save(); g.shadowColor = HIT; g.shadowBlur = 18; rr(g, bx, by, bw, bh, 3);
-      g.lineWidth = 2; g.strokeStyle = '#FFE680'; g.stroke(); g.restore();
+      g.save(); g.shadowColor = HIT; g.shadowBlur = 16; rr(g, bx, by, bw, bh, bh / 2);
+      g.lineWidth = 2; g.strokeStyle = '#FFF1A0'; g.stroke(); g.restore();
     }
-  }
-  // the singer's pitch trace, only on the already-sung side
-  const lim = Math.min(f1, nowF);
-  g.save(); g.beginPath(); g.rect(0, top - 6, W, bandH + 12); g.clip();
-  g.lineWidth = 2.5; g.lineCap = 'round'; g.lineJoin = 'round';
-  let i = f0;
-  while (i <= lim) {
-    if (!isFinite(a.midi[i])) { i++; continue; }
-    const st = ev.state[i];
-    g.beginPath(); g.moveTo(X(i * HOP), Y(a.midi[i]));
-    let j = i + 1;
-    while (j <= lim && isFinite(a.midi[j]) && ev.state[j] === st) { g.lineTo(X(j * HOP), Y(a.midi[j])); j++; }
-    if (j <= lim && isFinite(a.midi[j])) g.lineTo(X(j * HOP), Y(a.midi[j]));
-    g.strokeStyle = traceColor(st); g.stroke();
-    i = j;
-  }
-  g.restore();
-  // technique marks pop up where they were sung
-  const r = clamp(bh * 0.6, 7, 11);
-  g.textAlign = 'center'; g.textBaseline = 'middle';
-  for (const x of ev.techs) {
-    if (x.f > nowF) break;
-    const tx = X(x.f * HOP); if (tx < -40 || tx > W + 40) continue;
-    const T = TECH[x.type], age = t - x.f * HOP;
-    const ty = clamp(Y(x.p) - bh / 2 - r - 3, top + r, bot - r);
-    const pop = age < 0.25 ? 1 + 0.7 * (1 - age / 0.25) : 1;
-    g.beginPath(); g.arc(tx, ty, r * pop, 0, TAU); g.fillStyle = T.color; g.fill();
-    g.lineWidth = 1.5; g.strokeStyle = '#FFFFFF'; g.stroke();
-    g.font = '700 ' + Math.round(r * 1.15 * pop) + 'px ' + FONT_JP; g.fillStyle = '#0A1240'; g.fillText(T.mark, tx, ty + 0.5);
-    if (age < 1) {
-      g.globalAlpha = age < 0.7 ? 1 : 1 - (age - 0.7) / 0.3;
-      g.font = '700 ' + Math.round(clamp(H * 0.035, 11, 16)) + 'px ' + FONT_JP;
-      outlined(g, T.label, tx, ty - r - 10 - age * 12, T.color, '#06103A', 3.5);
+    // twinkles left on well-sung bars
+    if (b.e < nowF && b.hf >= 0.7) {
+      for (let q = 0; q < 2; q++) {
+        const ph = (t * 1.3 + b.s * 0.013 + q * 0.5) % 1, al = Math.sin(ph * Math.PI);
+        g.globalAlpha = al;
+        sparkle(g, bx + bw * (0.25 + 0.5 * ((b.s * 7 + q * 13) % 10) / 10), by - 3 - 6 * q, 3 + 3 * al, q ? '#FFFFFF' : '#FFE45C');
+      }
       g.globalAlpha = 1;
     }
   }
-  // phrase result: pitch-match rate floats up right after each phrase
-  const pfs = Math.round(clamp(H * 0.045, 12, 22));
+  // your pitch: dark edge + light core so it reads on any background
+  const f0 = Math.max(0, Math.floor(pg.t0 / HOP)), lim = Math.min(a.n - 1, nowF, Math.ceil(pg.t1 / HOP));
+  for (const pass of [0, 1]) {
+    g.lineWidth = pass ? 2 : 4.5; g.lineCap = 'round'; g.lineJoin = 'round';
+    let i = f0;
+    while (i <= lim) {
+      if (!isFinite(a.midi[i])) { i++; continue; }
+      const st = ev.state[i];
+      g.beginPath(); g.moveTo(X(i * HOP), Y(a.midi[i]));
+      let j = i + 1;
+      while (j <= lim && isFinite(a.midi[j]) && ev.state[j] === st) { g.lineTo(X(j * HOP), Y(a.midi[j])); j++; }
+      if (j <= lim && isFinite(a.midi[j])) g.lineTo(X(j * HOP), Y(a.midi[j]));
+      g.strokeStyle = pass ? traceColor(st) : 'rgba(10,20,60,.55)'; g.stroke();
+      i = j;
+    }
+  }
+  // technique marks where they were sung
+  const r = clamp(bh * 0.65, 6, 10);
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const x of ev.techs) {
+    if (x.f > nowF) break;
+    if (x.f * HOP < pg.t0 || x.f * HOP > pg.t1) continue;
+    const tx = X(x.f * HOP), T = TECH[x.type], age = t - x.f * HOP;
+    const ty = clamp(Y(x.p) - bh / 2 - r - 2, top + r + 1, bot - r - 1);
+    const pop = age < 0.25 ? 1 + 0.7 * (1 - age / 0.25) : 1;
+    g.beginPath(); g.arc(tx, ty, r * pop, 0, TAU); g.fillStyle = T.color; g.fill();
+    g.lineWidth = 1.5; g.strokeStyle = '#FFFFFF'; g.stroke();
+    g.font = '700 ' + Math.round(r * 1.15 * pop) + 'px ' + FONT_JP; g.fillStyle = INK; g.fillText(T.mark, tx, ty + 0.5);
+    if (age < 1) {
+      g.globalAlpha = age < 0.7 ? 1 : 1 - (age - 0.7) / 0.3;
+      const lfs = Math.round(clamp(H * 0.032, 10, 15));
+      g.font = '700 ' + lfs + 'px ' + FONT_JP;
+      outlined(g, T.label, tx, Math.max(top + lfs * 0.7, ty - r - 8 - age * 10), T.color, INK, 3.5);
+      g.globalAlpha = 1;
+    }
+  }
+  // phrase result
+  const pfs = Math.round(clamp(H * 0.04, 11, 20));
+  g.font = '400 ' + pfs + 'px ' + FONT_NUM;
   for (const ph of ev.phrases) {
     const age = t - (ph.e + 1) * HOP;
     if (age < 0 || age > 1.8) continue;
     g.globalAlpha = age < 1.3 ? 1 : 1 - (age - 1.3) / 0.5;
-    const px = clamp(X((ph.e + 1) * HOP), 60, W - 60), py = top + pfs * 0.9 - Math.min(1, age / 0.2) * 4;
-    g.font = '400 ' + pfs + 'px ' + FONT_NUM;
-    outlined(g, '音程 ' + Math.round(ph.rate * 100) + '%', px, py, rateColor(ph.rate), '#06103A', 4);
+    const label = '音程 ' + Math.round(ph.rate * 100) + '%', hw = g.measureText(label).width / 2 + 6;
+    const px = clamp(X((ph.e + 1) * HOP), hw, W - hw), py = top + pfs * 0.8 + 2 - Math.min(1, age / 0.2) * 3;
+    outlined(g, label, px, py, rateColor(ph.rate), INK, 4);
     g.globalAlpha = 1;
   }
-  judge();
-  // current-pitch cursor on the judgment line
+  g.restore();
+  // playhead + heart cursor
+  const px = clamp(X(t), Lx, Rx);
+  g.fillStyle = 'rgba(255,255,255,.9)'; g.fillRect(px - 1, top, 2, bandH);
   const cur = nowF >= 0 && nowF < a.n ? a.midi[nowF] : NaN;
-  if (isFinite(cur)) {
-    const st = ev.state[nowF], cy = clamp(Y(cur), top, bot);
-    g.beginPath(); g.moveTo(JX + 3, cy); g.lineTo(JX - 13, cy - 8); g.lineTo(JX - 13, cy + 8); g.closePath();
-    g.fillStyle = st === 2 ? HIT : traceColor(st); g.fill();
-    g.lineWidth = 1.5; g.strokeStyle = '#06103A'; g.stroke();
+  const st = isFinite(cur) ? ev.state[nowF] : -1;
+  const hy = isFinite(cur) ? clamp(Y(cur), top + 8, bot - 8) : top + bandH / 2;
+  const hs = clamp(bandH * 0.11, 6, 12);
+  g.save();
+  g.shadowColor = st === 2 ? '#FFE45C' : '#FF9AD5'; g.shadowBlur = 18;
+  heart(g, px, hy, hs);
+  g.fillStyle = isFinite(cur) ? (st === 2 ? '#FFF6C2' : '#FFFFFF') : 'rgba(255,255,255,.45)'; g.fill();
+  g.restore();
+  if (st === 2 && P.playing) {
+    const cols = ['#FFFFFF', '#FFE45C', '#7FE7FF', '#FF9AE0'];
+    for (let q = 0; q < 6; q++) {
+      const ph = (t * 1.7 + q * 0.17) % 1, ang = q * 1.047 + t * 1.5;
+      const d = hs * 1.2 + ph * hs * 2.2;
+      g.globalAlpha = 1 - ph;
+      sparkle(g, px + Math.cos(ang) * d, hy + Math.sin(ang) * d, 2 + 4 * (1 - ph), cols[q % 4]);
+    }
+    g.globalAlpha = 1;
   }
-  drawHud(g, ev, a, nowF, W, top);
-  drawTelop(g, ev, t, W, H);
+  drawHud(g, ev, a, nowF, W, top, k);
+  drawChips(g, ev, nowF, W, H, bot);
+  drawTelop(g, t, W, H);
   updateReadouts(t, nowF, cur);
   drawOverviewHead(t);
 }
 
-function drawHud(g, ev, a, nowF, W, top) {
-  const fs = Math.round(clamp(top * 0.36, 10, 20)), base = top - 12;
-  const k = clamp(nowF + 1, 0, a.n), den = ev.cumD[k];
+function drawHud(g, ev, a, nowF, W, top, k) {
+  const fs = Math.round(clamp(top * 0.5, 9, 18)), base = top - Math.max(4, top * 0.2);
+  const kk = clamp(nowF + 1, 0, a.n), den = ev.cumD[kk];
   g.textBaseline = 'alphabetic'; g.textAlign = 'left';
-  g.font = '700 ' + Math.round(fs * 0.75) + 'px ' + FONT_JP;
-  outlined(g, ev.mode === 'ref' ? '音程一致率' : '音程正確率', 12, base, '#C9D2FF', '#06103A', 3);
-  const lw = g.measureText(ev.mode === 'ref' ? '音程一致率' : '音程正確率').width;
-  g.font = '400 ' + Math.round(fs * 1.25) + 'px ' + FONT_NUM;
-  outlined(g, den > 0 ? (ev.cumN[k] / den * 100).toFixed(1) + '%' : '--.-%', 20 + lw, base + 1, HIT, '#06103A', 4);
-  // technique counters, right-aligned
-  const cnt = { shakuri: 0, kobushi: 0, vib: 0, fall: 0, long: 0 };
-  for (const x of ev.techs) { if (x.f > nowF) break; cnt[x.type]++; }
-  const r = fs * 0.55;
-  let x = W - 12;
-  g.font = '400 ' + fs + 'px ' + FONT_NUM; g.textAlign = 'right';
-  for (let n = TECH_ORDER.length - 1; n >= 0; n--) {
-    const ty = TECH_ORDER[n], T = TECH[ty];
-    outlined(g, String(cnt[ty]), x, base + 1, '#FFFFFF', '#06103A', 3);
-    x -= g.measureText(String(cnt[ty])).width + 4 + r;
-    g.beginPath(); g.arc(x, base - fs * 0.36, r, 0, TAU); g.fillStyle = T.color; g.fill();
-    g.save(); g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#0A1240';
-    g.font = '700 ' + Math.round(r * 1.2) + 'px ' + FONT_JP; g.fillText(T.mark, x, base - fs * 0.36 + 0.5); g.restore();
-    g.font = '400 ' + fs + 'px ' + FONT_NUM;
-    x -= r + fs * 0.6;
+  const lab = ev.mode === 'ref' ? '音程一致率' : '音程正確率';
+  g.font = '700 ' + Math.round(fs * 0.8) + 'px ' + FONT_JP;
+  outlined(g, lab, 10, base, '#FFFFFF', INK, 3);
+  const lw = g.measureText(lab).width;
+  g.font = '400 ' + Math.round(fs * 1.15) + 'px ' + FONT_NUM;
+  outlined(g, den > 0 ? (ev.cumN[kk] / den * 100).toFixed(1) + '%' : '--.-%', 16 + lw, base + 1, HIT, INK, 3.5);
+  // 演奏区間: page numbers with the current one large
+  const N = S.pages.length; if (!N) return;
+  const first = Math.max(0, Math.min(k - 2, N - 6)), last = Math.min(N - 1, first + 5);
+  let x = W - 10;
+  g.textAlign = 'right';
+  for (let q = last; q >= first; q--) {
+    const on = q === k;
+    g.font = '400 ' + Math.round(on ? fs * 1.35 : fs * 0.85) + 'px ' + FONT_NUM;
+    outlined(g, String(q + 1), x, base + 1, on ? '#FFFFFF' : 'rgba(255,255,255,.75)', INK, on ? 4 : 3);
+    x -= g.measureText(String(q + 1)).width + fs * 0.55;
+  }
+  g.font = '700 ' + Math.round(fs * 0.72) + 'px ' + FONT_JP;
+  const tw = g.measureText('演奏区間').width;
+  rr(g, x - tw - 10, base - fs * 0.85, tw + 12, fs * 1.1, fs * 0.55); g.fillStyle = 'rgba(11,16,48,.7)'; g.fill();
+  g.fillStyle = '#FFFFFF'; g.fillText('演奏区間', x - 4, base - 1);
+}
+
+function drawChips(g, ev, nowF, W, H, bot) {
+  const ch = Math.round(clamp(H * 0.05, 14, 24)), y = bot + Math.round(ch * 0.3);
+  const cnt = {}; for (const k of TECH_ORDER) cnt[k] = 0;
+  if (ev && nowF >= 0) for (const x of ev.techs) { if (x.f > nowF) break; cnt[x.type]++; }
+  const fs = Math.round(ch * 0.55), gap = 6;
+  g.font = '700 ' + fs + 'px ' + FONT_JP;
+  const showLabel = W >= 520;
+  let x = 10;
+  g.textBaseline = 'middle'; g.textAlign = 'left';
+  for (const k of TECH_ORDER) {
+    const T = TECH[k], label = (showLabel ? T.label + ' ' : '') + cnt[k];
+    const w = ch + g.measureText(label).width + 8;
+    rr(g, x, y, w, ch, ch / 2); g.fillStyle = 'rgba(11,16,48,.62)'; g.fill();
+    g.beginPath(); g.arc(x + ch / 2, y + ch / 2, ch * 0.36, 0, TAU); g.fillStyle = T.color; g.fill();
+    g.fillStyle = INK; g.textAlign = 'center'; g.font = '700 ' + Math.round(ch * 0.42) + 'px ' + FONT_JP;
+    g.fillText(T.mark, x + ch / 2, y + ch / 2 + 0.5);
+    g.textAlign = 'left'; g.font = '700 ' + fs + 'px ' + FONT_JP; g.fillStyle = '#FFFFFF';
+    g.fillText(label, x + ch + 2, y + ch / 2 + 0.5);
+    x += w + gap;
   }
 }
 
-// Two-line telop of the phrase's do-re-mi, wiped in time like karaoke lyrics.
-function drawTelop(g, ev, t, W, H) {
-  const PH = ev.phrases;
-  let idx = PH.findIndex(ph => (ph.e + 1) * HOP + 0.5 >= t);
-  if (idx < 0) return;
-  const fs0 = clamp(H * 0.075, 16, 46);
-  for (const k of [idx, idx + 1]) {
-    const ph = PH[k];
-    if (!ph || ph.s * HOP - t > 6) continue;
-    const slot = k % 2, y = slot ? H * 0.9 : H * 0.765;
-    const syl = ph.items.map(it => solfName(it.q));
-    let fs = fs0;
-    g.font = '700 ' + fs + 'px ' + FONT_JP;
-    let ws = syl.map(s => g.measureText(s).width), gap = fs * 0.4;
-    let tw = ws.reduce((p, c) => p + c, 0) + gap * (syl.length - 1);
-    if (tw > W * 0.88) {
-      const sc = W * 0.88 / tw; fs *= sc; gap *= sc; tw *= sc; ws = ws.map(w => w * sc);
-      g.font = '700 ' + fs + 'px ' + FONT_JP;
+// ---- lyric telop ----
+const LYR_FONT = fs => '900 ' + fs + 'px ' + FONT_JP;
+const RUBY_FONT = fs => '700 ' + fs + 'px ' + FONT_JP;
+function lineLayout(g, L, maxW, fs0) {
+  const key = fs0 + '|' + maxW;
+  if (L.lay && L.lay.key === key) return L.lay;
+  let fs = fs0, lay;
+  for (let pass = 0; pass < 2; pass++) {
+    const rfs = Math.max(8, Math.round(fs * 0.42));
+    const items = [], cs = [], ce = [];
+    let x = 0;
+    for (const sg of L.segs) {
+      g.font = LYR_FONT(fs); const bw = g.measureText(sg.b).width;
+      let rw = 0; if (sg.r) { g.font = RUBY_FONT(rfs); rw = g.measureText(sg.r).width; }
+      const pad = rw > bw ? (rw - bw) / 2 : 0;
+      x += pad;
+      g.font = LYR_FONT(fs);
+      const chars = Array.from(sg.b); let acc = '';
+      for (const c of chars) { cs.push(x + g.measureText(acc).width); acc += c; ce.push(x + g.measureText(acc).width); }
+      items.push({ x, bw, b: sg.b, r: sg.r, rw });
+      x += bw + pad;
     }
-    let x = slot ? W * 0.95 - tw : W * 0.05;
-    g.textAlign = 'left'; g.textBaseline = 'alphabetic';
-    // count-in dots before a phrase that follows a long rest
-    const prevEnd = k > 0 ? (PH[k - 1].e + 1) * HOP : 0, lead = ph.s * HOP - t;
-    if (ph.s * HOP - prevEnd >= 2 && lead > 0 && lead <= 2.4) {
-      const dots = Math.ceil(lead / 0.6), dr = fs * 0.14;
+    lay = { key, fs, rfs, w: x, items, cs, ce, n: cs.length };
+    if (x <= maxW || pass) break;
+    fs = Math.max(10, Math.floor(fs * maxW / x));
+  }
+  L.lay = lay;
+  return lay;
+}
+function wipeChars(L, t) {
+  const n = L.n;
+  if (t <= L.t0) return 0;
+  if (L.words) {
+    let k = -1; for (let q = 0; q < L.words.length; q++) if (L.words[q].wt <= t) k = q;
+    if (k < 0) return 0;
+    const w = L.words[k], nextAt = k + 1 < L.words.length ? L.words[k + 1].at : n;
+    const end = w.we !== undefined ? w.we : k + 1 < L.words.length ? L.words[k + 1].wt : L.t1;
+    const len = w.len !== undefined ? w.len : nextAt - w.at;
+    return w.at + len * clamp((t - w.wt) / Math.max(0.05, end - w.wt), 0, 1);
+  }
+  if (t >= L.t1) return n;
+  let done = 0;
+  for (const [a, b] of L.voiced) { if (t >= b) done += b - a; else if (t > a) done += t - a; }
+  const target = done / L.V * L.W;
+  let acc = 0;
+  for (let q = 0; q < n; q++) {
+    const w = L.w[q];
+    if (acc + w > target) return w > 0 ? q + (target - acc) / w : q;
+    acc += w;
+  }
+  return n;
+}
+function drawLine(g, L, x0, y, t, wipeCol) {
+  const lay = L.lay, fs = lay.fs, rfs = lay.rfs, ry = y - fs * 0.98;
+  const p = wipeChars(L, t);
+  const q = Math.min(lay.n - 1, Math.floor(p));
+  const wx = p >= lay.n ? lay.w : p <= 0 ? 0 : lay.cs[q] + (lay.ce[q] - lay.cs[q]) * (p - q);
+  const paint = (fill, stroke) => {
+    for (const it of lay.items) {
+      g.font = LYR_FONT(fs); g.textAlign = 'left';
+      outlined(g, it.b, x0 + it.x, y, fill, stroke, Math.max(3, fs * 0.17));
+      if (it.r) { g.font = RUBY_FONT(rfs); g.textAlign = 'center'; outlined(g, it.r, x0 + it.x + it.bw / 2, ry, fill, stroke, Math.max(2.5, rfs * 0.3)); }
+    }
+  };
+  g.textBaseline = 'alphabetic';
+  g.save(); g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 6; g.shadowOffsetY = 2;
+  if (wx < lay.w) { g.save(); g.beginPath(); g.rect(x0 + wx, y - fs * 1.9, lay.w + 40, fs * 2.4); g.clip(); paint('#FFFFFF', INK); g.restore(); }
+  g.restore();
+  if (wx > 0) { g.save(); g.beginPath(); g.rect(x0 - 20, y - fs * 1.9, wx + 20, fs * 2.4); g.clip(); paint(wipeCol, '#FFFFFF'); g.restore(); }
+  g.textAlign = 'left';
+}
+function telopChoice(D, t) {
+  let c = -1; for (let q = 0; q < D.length; q++) if (D[q].t0 <= t) c = q;
+  if (c < 0) return D[0] && D[0].t0 - t < 10 ? [0, 1].filter(q => D[q]) : [];
+  const cur = D[c];
+  if (t > cur.t1 + 2.5) {
+    if (c + 1 < D.length && D[c + 1].t0 - t <= 5) return [c + 1, c + 2].filter(q => D[q]);
+    return [];
+  }
+  const other = c > 0 && t < D[c - 1].t1 + 0.6 ? c - 1 : c + 1;
+  return [c, other].filter(q => D[q]);
+}
+function drawTelop(g, t, W, H) {
+  const D = S.lyrDisp;
+  if (!D || !D.length) return;
+  const fs0 = Math.round(clamp(H * 0.085, 16, 56));
+  for (const q of telopChoice(D, t)) {
+    const L = D[q], slot = q % 2;
+    const lay = lineLayout(g, L, W * 0.88, fs0);
+    const y = slot ? H * 0.905 : H * 0.72;
+    const x0 = slot ? Math.max(W * 0.06, W * 0.94 - lay.w) : W * 0.06;
+    const prevEnd = q > 0 ? D[q - 1].t1 : -Infinity, lead = L.t0 - t;
+    if (L.t0 - prevEnd >= 3 && lead > 0 && lead <= 2.4) {
+      const dots = Math.ceil(lead / 0.6), dr = lay.fs * 0.13;
       for (let d = 0; d < dots; d++) {
-        g.beginPath(); g.arc(x + dr + d * dr * 3, y - fs * 1.15, dr, 0, TAU);
-        g.fillStyle = '#FFFFFF'; g.fill(); g.lineWidth = 2; g.strokeStyle = '#0A1240'; g.stroke();
+        g.beginPath(); g.arc(x0 + dr + d * dr * 3, y - lay.fs * 1.55, dr, 0, TAU);
+        g.fillStyle = S.wipe; g.fill(); g.lineWidth = 2; g.strokeStyle = '#FFFFFF'; g.stroke();
       }
     }
-    const lw = Math.max(3, fs * 0.2);
-    ph.items.forEach((it, n) => {
-      outlined(g, syl[n], x, y, '#FFFFFF', '#0A1240', lw);
-      const frac = clamp((t - it.s * HOP) / ((it.e + 1 - it.s) * HOP), 0, 1);
-      if (frac > 0) {
-        g.save(); g.beginPath(); g.rect(x - lw, y - fs * 1.2, ws[n] * frac + (frac >= 1 ? lw * 2 : lw), fs * 1.6); g.clip();
-        outlined(g, syl[n], x, y, '#2F8BFF', '#FFFFFF', lw);
-        g.restore();
-      }
-      x += ws[n] + gap;
-    });
+    drawLine(g, L, x0, y, t, S.wipe);
   }
 }
 
@@ -1504,6 +2400,7 @@ function setMode(m, doRecompute = true) {
   $('selfOpts').hidden = m !== 'self';
   $('refOpts').hidden = m !== 'ref';
   updateLegend();
+  if (S.perf) updateSrcInfo();
   if (doRecompute) {
     if (m === 'ref' && !S.ref) { toast('「お手本ファイルを選ぶ」から、比べたい原曲やガイドメロディを読み込んでください。'); S.ev && recompute(false); return; }
     recompute(m === 'ref' && S.lag === 0);
@@ -1517,7 +2414,7 @@ $('modeSelf').addEventListener('click', () => setMode('self'));
 $('modeRef').addEventListener('click', () => setMode('ref'));
 $('tuneChk').addEventListener('change', e => { S.autoTune = e.target.checked; recompute(false); });
 $('octChk').addEventListener('change', e => { S.octFree = e.target.checked; recompute(false); });
-$('lag').addEventListener('input', e => { S.lag = Math.round(+e.target.value / 10); syncLagUI(); if (S.mode === 'ref' && S.ref) { S.ev = evalRef(S.perf.a, S.ref.a, S.lag, S.octFree); drawOverview(); render(); } });
+$('lag').addEventListener('input', e => { S.lag = Math.round(+e.target.value / 10); syncLagUI(); if (S.mode === 'ref' && S.ref) { S.ev = evalRef(S.perf.a, S.ref.a, S.lag, S.octFree); layoutLyrics(); drawOverview(); render(); } });
 $('autoLagBtn').addEventListener('click', () => { if (S.ref) recompute(true); });
 $('playBtn').addEventListener('click', () => P.playing ? pause() : play());
 $('restartBtn').addEventListener('click', () => { closeResult(); seek(0); if (!P.playing) play(); });
@@ -1529,8 +2426,12 @@ $('rReplay').addEventListener('click', () => { closeResult(); seek(0); play(); }
 $('result').addEventListener('click', e => { if (e.target.id === 'result') closeResult(); });
 ov.addEventListener('click', e => { const r = ov.getBoundingClientRect(); seek((e.clientX - r.left) / r.width * dur()); });
 document.addEventListener('keydown', e => {
+  if (S.tap) {
+    if ((e.code === 'Space' || e.key === 'Enter') && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) { e.preventDefault(); tapMark(); return; }
+    if (e.key === 'Escape') { endTap(); return; }
+  }
   if (e.key === 'Escape') closeResult();
-  if (e.code === 'Space' && !['INPUT', 'BUTTON', 'SELECT'].includes(document.activeElement.tagName)) { e.preventDefault(); P.playing ? pause() : play(); }
+  if (e.code === 'Space' && !['INPUT', 'BUTTON', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) { e.preventDefault(); P.playing ? pause() : play(); }
 });
 document.addEventListener('dragover', e => e.preventDefault());
 document.addEventListener('drop', e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) loadFile(f, 'perf'); });
@@ -1552,6 +2453,43 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => rend
   await loadSample().catch(err => { busy(false); toast('サンプルの準備に失敗しました：' + err.message); });
 })();
 $('libReload').addEventListener('click', () => listLibrary());
+$('lyrFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  await setLyrics(decodeText(await f.arrayBuffer()), f.name, { local: true });
+});
+$('lyrEditBtn').addEventListener('click', () => {
+  const ed = $('lyrEditor'); ed.hidden = !ed.hidden;
+  $('lyrEditBtn').setAttribute('aria-expanded', String(!ed.hidden));
+  if (!ed.hidden) $('lyrText').focus();
+});
+$('lyrApply').addEventListener('click', () => setLyrics($('lyrText').value, '貼り付けた歌詞', { local: true }));
+$('lyrClear').addEventListener('click', () => { S.lyr = null; saveLyrics(); clearLyrics(); });
+$('lyrTapBtn').addEventListener('click', startTap);
+$('tapNext').addEventListener('click', tapMark);
+$('tapDone').addEventListener('click', endTap);
+$('lyrExport').addEventListener('click', exportLrc);
+$('furiChk').addEventListener('change', async e => { S.furi = e.target.checked; if (S.lyr) { await addFurigana(S.lyr); layoutLyrics(); render(); updateLyrStatus(); } });
+$('wipeSel').addEventListener('change', e => { S.wipe = e.target.value; render(); });
+$('lyrOff').addEventListener('input', e => { S.lyrOff = +e.target.value / 1000; $('lyrOffOut').textContent = (S.lyrOff >= 0 ? '+' : '−') + Math.abs(+e.target.value) + ' ms'; layoutLyrics(); render(); });
+$('srcSel').addEventListener('change', async e => {
+  S.source = e.target.value;
+  const items = [S.perf, S.ref].filter(x => x && x.ch);
+  if (!items.length) return;
+  stopAll();
+  try {
+    for (const it of items) { busy(true, it.name + ' を解析し直しています…'); it.pp = await analyzeChannels(it.ch.L, it.ch.R, it.ch.sr); }
+    recompute(S.mode === 'ref' && !!S.ref);
+  } catch (err) { toast(err && err.message ? err.message : String(err)); }
+  busy(false); updateSrcInfo();
+});
+function updateSrcInfo() {
+  const d = it => it && it.pp ? (it.pp.method === 'mix' ? '伴奏入りとしてボーカルを抜き出して解析' : 'ボーカルだけとして解析') : '';
+  const parts = [];
+  if (S.perf) parts.push('歌唱：' + d(S.perf));
+  if (S.ref && S.mode === 'ref') parts.push('お手本：' + d(S.ref));
+  $('srcInfo').textContent = parts.join('／') + (S.source === 'auto' ? '（自動判定）' : '');
+}
 $('urlForm').addEventListener('submit', e => { e.preventDefault(); urlLoad('perf'); });
 $('urlRef').addEventListener('click', () => urlLoad('ref'));
 async function urlLoad(role) {
@@ -1559,7 +2497,7 @@ async function urlLoad(role) {
   if (!u) { toast('GitHub のファイル URL を貼り付けてください。'); return; }
   const label = decodeURIComponent(u.split('?')[0].split('/').pop() || 'ファイル');
   if (role === 'perf') { stopAll(); closeResult(); markActive(null); }
-  try { await loadUrl(u, role, label, role === 'perf' ? { dropRef: S.refIsSample } : {}); }
+  try { await loadUrl(u, role, label, role === 'perf' ? { dropRef: S.refIsSample, lyricsKey: 'url:' + u } : {}); }
   catch (e) { toast((e && e.message ? e.message : String(e)) + '（GitHub 以外のサイトは、相手側がブラウザからの読み込みを許可していないと読めません）'); }
   busy(false);
 }
